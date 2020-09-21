@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Java虚拟机之类加载机制 &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Java虚拟机之类加载机制" />
+<meta property="og:description" content="概述
+Java虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。
+与其他语言不同的是在Java语言里，类的加载、连接和初始化过程都是在程序运行期间完成的，Java里可动态扩展的语言特性就是依赖运行期动态加载和动态连接这个特点实现的。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" />
+<meta property="article:published_time" content="2018-02-01T13:39:09+00:00" />
+<meta property="article:modified_time" content="2018-02-01T13:39:09+00:00" />
+
+    
+    <meta itemprop="name" content="Java虚拟机之类加载机制">
+<meta itemprop="description" content="概述
+Java虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。
+与其他语言不同的是在Java语言里，类的加载、连接和初始化过程都是在程序运行期间完成的，Java里可动态扩展的语言特性就是依赖运行期动态加载和动态连接这个特点实现的。">
+<meta itemprop="datePublished" content="2018-02-01T13:39:09+00:00" />
+<meta itemprop="dateModified" content="2018-02-01T13:39:09+00:00" />
+<meta itemprop="wordCount" content="202">
+
+
+
+<meta itemprop="keywords" content="Java,Java虚拟机,JVM," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Java虚拟机之类加载机制"/>
+<meta name="twitter:description" content="概述
+Java虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。
+与其他语言不同的是在Java语言里，类的加载、连接和初始化过程都是在程序运行期间完成的，Java里可动态扩展的语言特性就是依赖运行期动态加载和动态连接这个特点实现的。"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+          <a class="main-nav-link" href="/about/">About</a>
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+          <td><a class="main-nav-link" href="/about/">About</a></td>
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        6
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          3
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner3.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">
+    <h1 class="article-title" itemprop="name">
+        Java虚拟机之类加载机制
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-02-01 13:39:09 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+            &middot;
+            202
+            words
+            &middot;
+            1
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="概述">概述</h1>
+<p>Java虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。</p>
+<p>与其他语言不同的是在Java语言里，类的加载、连接和初始化过程都是在程序运行期间完成的，Java里可动态扩展的语言特性就是依赖运行期动态加载和动态连接这个特点实现的。</p>
+<h1 id="类加载的三个阶段">类加载的三个阶段</h1>
+<p>Java类加载分为三个阶段，分别是：加载、连接、初始化；其中连接阶段又可以分为三个阶段，这三个阶段分别是：验证、准备、解析。类加载的三个阶段可如下图所示：</p>
+<p><img src="/images/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/1.jpg" alt="类加载的三个阶段"></p>
+<p>Java虚拟机规范中并没有规定什么时候开始进行加载，这点交由虚拟机自己实现，但是对于初始化阶段，虚拟机规范则进行了严格的规定。</p>
+<p>Java虚拟机规范中规定以下六种情况必须立即对类进行初始化：</p>
+<ol>
+<li>遇到new、getstatic、putstatic、invokestatic这四条字节码时，如果类没有进行过初始化，则需先触发其初始化；</li>
+<li>使用java.lang.reflect包的方法对类进行反射调用的时候，如果类还没有进行初始化，则需要先触发其初始化；</li>
+<li>当初始化一个类时，其父类还没有进行过初始化，则需要先触发其父类的初始化；</li>
+<li>对一个类或接口的静态变量进行访问或者赋值操作时，这个类或者接口还没有进行过初始化，则需要先触发其初始化；</li>
+<li>当虚拟机启动时，用户指定一个需要执行的主类，虚拟机会先初始化这个主类；</li>
+<li>当调用一个类的静态方法时，这个类还没有进行过初始化，则需要先触发其初始化；</li>
+</ol>
+<p>Java虚拟机规范中规定的这六种情况触发的初始化情景称为对一个类的主动引用。除此之外，所有引用类的方式都不会触发初始化，称之为被动引用。</p>
+<p>被动引用的几个个例子：</p>
+<ol>
+<li>通过子类引用父类的静态字段，不会导致子类初始化</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Father</span><span style="color:#f92672">{</span>  
+    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> count <span style="color:#f92672">=</span> 1<span style="color:#f92672">;</span>  
+    <span style="color:#66d9ef">static</span><span style="color:#f92672">{</span>  
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Initialize class Dfather&#34;</span><span style="color:#f92672">);</span>  
+    <span style="color:#f92672">}</span>  
+<span style="color:#f92672">}</span>  
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Son</span> <span style="color:#66d9ef">extends</span> Father<span style="color:#f92672">{</span>  
+    <span style="color:#66d9ef">static</span><span style="color:#f92672">{</span>  
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Initialize class Dson&#34;</span><span style="color:#f92672">);</span>  
+    <span style="color:#f92672">}</span>  
+<span style="color:#f92672">}</span>  
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Test</span> <span style="color:#f92672">{</span>  
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>  
+        <span style="color:#66d9ef">int</span> x <span style="color:#f92672">=</span> Son<span style="color:#f92672">.</span><span style="color:#a6e22e">count</span><span style="color:#f92672">;</span>  
+    <span style="color:#f92672">}</span>  
+<span style="color:#f92672">}</span>  
+</code></pre></div><ol start="2">
+<li>通过数组定义类引用类，不会触发此类的初始化</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">A</span><span style="color:#f92672">{</span>  
+    <span style="color:#66d9ef">static</span><span style="color:#f92672">{</span>  
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Initialize class E&#34;</span><span style="color:#f92672">);</span>  
+    <span style="color:#f92672">}</span>  
+<span style="color:#f92672">}</span>  
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Test</span> <span style="color:#f92672">{</span>  
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>  
+        A<span style="color:#f92672">[]</span> e <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> A<span style="color:#f92672">[</span>10<span style="color:#f92672">];</span>  
+    <span style="color:#f92672">}</span>  
+<span style="color:#f92672">}</span>  
+</code></pre></div><ol start="3">
+<li>常量在编译阶段会存入调用类的常量池中，本质上没有直接引用到定义常量的类，因此不会触发定义常量的类的初始化</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">A</span><span style="color:#f92672">{</span>  
+    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> count <span style="color:#f92672">=</span> 1<span style="color:#f92672">;</span>  
+    <span style="color:#66d9ef">static</span><span style="color:#f92672">{</span>  
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Initialize class F&#34;</span><span style="color:#f92672">);</span>  
+    <span style="color:#f92672">}</span>  
+<span style="color:#f92672">}</span>  
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Test</span> <span style="color:#f92672">{</span>  
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>  
+        <span style="color:#66d9ef">int</span> x <span style="color:#f92672">=</span> A<span style="color:#f92672">.</span><span style="color:#a6e22e">count</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>  
+<span style="color:#f92672">}</span>  
+</code></pre></div><h1 id="类加载过程">类加载过程</h1>
+<h2 id="加载阶段">加载阶段</h2>
+<p>加载是类加载过程的一个阶段，类加载阶段需要完成以下三件事情：</p>
+<ol>
+<li>通过一个类的全限定名来获取定义此类的二进制字节流；</li>
+<li>将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构；</li>
+<li>在内存中生成一个代表这个类的java.lang.Class对象，作为方法区这个类的各种数据的访问入口；</li>
+</ol>
+<p>加载阶段生成的Class对象是一个Java对象，在Java虚拟机规范中并没有规定这个Class对象存放在哪个内存区域，对于HotSpot虚拟机而言，它将Class对象存放在了方法区中。</p>
+<p>虚拟机规范中也没有规定被加载类的来源，类可以从本地磁盘中加载也可以从内存中加载还可以从网络中加载，总之规范中没有规定加载类的来源，只要被加载的类符合虚拟机规范的类文件结构，那么这个类就可以被加载。</p>
+<h2 id="连接阶段">连接阶段</h2>
+<p>在加载阶段完成后，虚拟机外部的二进制数据就会按照虚拟机所需要的格式存储在虚拟机的方法区中，接着开始连接阶段，连接阶段分为验证、准备、解析三个阶段；</p>
+<h3 id="验证阶段">验证阶段</h3>
+<p>验证阶段是为了确保Class文件的字节流中包含的信息符合当前虚拟机的要求，并且不会对虚拟机自身安全造成危害。
+当验证不通过时，虚拟机应当抛出一个java.lang.VerifyError异常。</p>
+<p>虚拟机首先会进行<strong>文件格式验证</strong>，文件格式验证会对以下几个方面进行验证：</p>
+<ol>
+<li>是否以魔数0xCAFEBABE开头；</li>
+<li>类的主次版本号是否在当前虚拟机处理范围之内；</li>
+<li>常量池的常量是否含有不被支持的常量类型；</li>
+<li>指向常量的各种索引值中是否有指向不存在的常量或者不符合类型的常量；</li>
+<li>其他二进制字节流的验证。</li>
+</ol>
+<p>文件格式验证完后，然后开始<strong>元数据验证</strong>，元数据验证是对字节码描述的信息进行语义分析，保证不存在不符合Java语言规定的元数据信息，包括：</p>
+<ol>
+<li>这个类是否有父类；</li>
+<li>这个类的父类是否继承了不允许继承的类；</li>
+<li>如果这个类不是抽象类，是否实现了父类或者接口之中要求实现的所有方法；</li>
+<li>类中的字段、方法是否与父类产生矛盾；</li>
+<li>其他语义验证。</li>
+</ol>
+<p>元数据验证后，开始进行<strong>字节码验证</strong>，字节码验证主要是通过数据流和控制流分析，确定程序语义是合法的、符合逻辑的。这阶段会对类的方法进行校验分析，保证被校验类的方法在运行时不会做出危害虚拟机安全的事件。</p>
+<p>字节码验证后，进行验证阶段最后一个验证：<strong>符号引用验证</strong>，符号引用验证可以看作是对自身以外的信息（常量池中的各种符号引用）进行匹配性校验。符号引用验证的目的是确保解析动作能正常执行。</p>
+<h3 id="准备阶段">准备阶段</h3>
+<p>准备阶段是正式为类变量分配内存并设置类变量初始值的阶段，这些变量所需要的内存都将在方法区中进行分配。这时候进行内存分配的仅包括类变量（被static修饰的变量），而不包括实例变量，实例变量将会在对象实例化时随着对象一起分配在Java堆中。这里说的初始值通常情况下是数据类型的零值，假设定义了一个变量：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> value <span style="color:#f92672">=</span> 123<span style="color:#960050;background-color:#1e0010">；</span>
+</code></pre></div><p>变量value在准备阶段初始化值为0，而不是123，将变量赋值为123是在初始化阶段才会执行。</p>
+<p>基本数据类型的零值：</p>
+<table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>零值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>int</td>
+<td>0</td>
+</tr>
+<tr>
+<td>long</td>
+<td>0L</td>
+</tr>
+<tr>
+<td>short</td>
+<td>0</td>
+</tr>
+<tr>
+<td>char</td>
+<td>&lsquo;\u0000&rsquo;</td>
+</tr>
+<tr>
+<td>byte</td>
+<td>0</td>
+</tr>
+<tr>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>float</td>
+<td>0.0f</td>
+</tr>
+<tr>
+<td>double</td>
+<td>0.0d</td>
+</tr>
+<tr>
+<td>reference</td>
+<td>null</td>
+</tr>
+</tbody>
+</table>
+<p>如果这个变量是个常量，那么这个变量在准备阶段就会被赋值，如：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> value <span style="color:#f92672">=</span> 123<span style="color:#960050;background-color:#1e0010">；</span>
+</code></pre></div><p>变量value在准备阶段就会被赋值为123。</p>
+<h3 id="解析阶段">解析阶段</h3>
+<p>解析阶段是虚拟机将常量池内的符号引用替换为直接引用的过程。</p>
+<p>符号引用：符号引用以一组符号来描述所引用的目标，符号可以使任何形式的字面量，只要使用时能无歧义地定位到目标即可。符号引用于虚拟机实现内存布局无关，引用的目标不一一定已经加载到内存中。</p>
+<p>直接引用：直接引用可以使直接指向目标的指针、相对偏移量是一个能简介定位到目标的句柄。</p>
+<p>解析动作主要针对类或接口、字段、类方法、接口方法、方法类型、方法句柄和调用限定符7类符号引用进行。</p>
+<ol>
+<li>
+<p>类或接口的解析
+判断所要转化成的直接引用是对数组类型，还是普通的对象类型的引用，从而进行不同的解析。</p>
+</li>
+<li>
+<p>字段解析
+在对字段进行解析前，会先查看该字段所属的类或接口的符号引用是否已经解析过，没有就先对字段所属的接口或类进行解析。在对字段进行解析的时候，先查找本类或接口中是否有该字段，有就直接返回；否则，再对实现的接口进行遍历，会按照继承关系从下往上递归（也就是说，每个父接口都会走一遍）搜索各个接口和它的父接口，返回最近一个接口的直接引用；再对继承的父类进行遍历，会按照继承关系从下往上递归（也就是说，每个父类都会走一遍）搜索各个父类，返回最近一个父类的直接引用。</p>
+</li>
+<li>
+<p>类方法解析
+和字段解析搜索步骤差不多，只不过是先搜索父类，再搜索接口。</p>
+</li>
+<li>
+<p>接口方法解析
+和类方法解析差不多，只不过接口中不会有父类，因此只需要对父接口进行搜索即可。</p>
+</li>
+</ol>
+<h2 id="初始化阶段">初始化阶段</h2>
+<p>类加载阶段的最后一个阶段就是初始化阶段，初始化阶段是执行类构造器&lt;clinit&gt;()方法的过程。</p>
+<p>&lt;clinit&gt;()方法是由编译器自动收集类中的所有变量的赋值动作和静态语句块中的语句合并产生的，编译器收集的顺序是由语句在源文件中出现的顺序决定的，静态语句块中只能访问到定义在静态语句块之前的变量，定义在它之后的变量可以赋值，但是不能访问。</p>
+<p>&lt;clinit&gt;()方法与类构造函数不一样，它不需要显示的调用父类的构造器，虚拟机会保证子类的&lt;clinit&gt;()方法执行之前，父类的&lt;clinit&gt;()已经执行完毕。</p>
+<p>由于父类的&lt;clinit&gt;()方法先执行，所以父类的静态语句块优于子类的变量赋值操作。</p>
+<p>&lt;clinit&gt;()对类或者接口来说并不是必须的，如果一个类没有静态语句块，也就没有对变量的赋值操作，那么编译器不会为这个类生成&lt;clinit&gt;()方法。</p>
+<p>接口中无静态语句块但是有赋值操作，因此接口也会有&lt;clinit&gt;()方法，但是接口的&lt;clinit&gt;()方法只用当子类和实现类中定义的变量有使用时才会执行&lt;clinit&gt;()方法。</p>
+<p>&lt;clinit&gt;()方法是线程安全的。</p>
+<h1 id="参考文献">参考文献</h1>
+<p>《深入理解Java虚拟机:JVM高级特性与最佳实践》 周志明著</p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" data-id="a3ce08b3ba6e37fd528780ba281a57b8" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Older
+      </strong>
+      <div class="article-nav-title">Java虚拟机之垃圾回收机制</div>
+    </a>
+    
+
+    
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Java虚拟机之类加载器</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="Java虚拟机之类加载机制" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="title">Java虚拟机之JVM启动参数大全</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-02 10:47:12 &#43;0000 UTC" itemprop="datePublished">2018-02-02</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="Java虚拟机之类加载机制" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="title">Java虚拟机之类加载器</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-01 16:17:23 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java虚拟机之类加载机制" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之类加载机制</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-01 13:39:09 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java虚拟机之类加载机制" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之垃圾回收机制</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-01-30 14:47:23 &#43;0000 UTC" itemprop="datePublished">2018-01-30</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java虚拟机之类加载机制" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="title">Java虚拟机之内存模型与volatile</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-01-25 15:14:22 &#43;0000 UTC" itemprop="datePublished">2018-01-25</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

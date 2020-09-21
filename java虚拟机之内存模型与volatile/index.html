@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Java虚拟机之内存模型与volatile &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Java虚拟机之内存模型与volatile" />
+<meta property="og:description" content="硬件效率与一致性
+尽管现代内存的速度在不断提高，但是内存的速度与cpu比起来还不在一个量级，为了提升计算速度，在内存和处理器之间加上一个高速缓存来作为内存和处理器之间的缓冲。基于高速缓存的方法很好的解决了处理器与内存的矛盾，但是也引入了一个新的问题：缓存一致性。每个处理器都有自己的高速缓存，而他们又共享一个主内存。当处理多个处理器的运算任务都涉及同一个主内存区域时，将可能导致各自的缓存数据不一致，如果真发生这种情况，将同步到主内存的数据到底以谁的缓存数据为准。为了解决一致性问题，需要各个处理器访问缓存时都遵循一些协议。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" />
+<meta property="article:published_time" content="2018-01-25T15:14:22+00:00" />
+<meta property="article:modified_time" content="2018-01-25T15:14:22+00:00" />
+
+    
+    <meta itemprop="name" content="Java虚拟机之内存模型与volatile">
+<meta itemprop="description" content="硬件效率与一致性
+尽管现代内存的速度在不断提高，但是内存的速度与cpu比起来还不在一个量级，为了提升计算速度，在内存和处理器之间加上一个高速缓存来作为内存和处理器之间的缓冲。基于高速缓存的方法很好的解决了处理器与内存的矛盾，但是也引入了一个新的问题：缓存一致性。每个处理器都有自己的高速缓存，而他们又共享一个主内存。当处理多个处理器的运算任务都涉及同一个主内存区域时，将可能导致各自的缓存数据不一致，如果真发生这种情况，将同步到主内存的数据到底以谁的缓存数据为准。为了解决一致性问题，需要各个处理器访问缓存时都遵循一些协议。">
+<meta itemprop="datePublished" content="2018-01-25T15:14:22+00:00" />
+<meta itemprop="dateModified" content="2018-01-25T15:14:22+00:00" />
+<meta itemprop="wordCount" content="57">
+
+
+
+<meta itemprop="keywords" content="Java,Java虚拟机,JVM," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Java虚拟机之内存模型与volatile"/>
+<meta name="twitter:description" content="硬件效率与一致性
+尽管现代内存的速度在不断提高，但是内存的速度与cpu比起来还不在一个量级，为了提升计算速度，在内存和处理器之间加上一个高速缓存来作为内存和处理器之间的缓冲。基于高速缓存的方法很好的解决了处理器与内存的矛盾，但是也引入了一个新的问题：缓存一致性。每个处理器都有自己的高速缓存，而他们又共享一个主内存。当处理多个处理器的运算任务都涉及同一个主内存区域时，将可能导致各自的缓存数据不一致，如果真发生这种情况，将同步到主内存的数据到底以谁的缓存数据为准。为了解决一致性问题，需要各个处理器访问缓存时都遵循一些协议。"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+          <a class="main-nav-link" href="/about/">About</a>
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+          <td><a class="main-nav-link" href="/about/">About</a></td>
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        6
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          3
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner2.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/">
+    <h1 class="article-title" itemprop="name">
+        Java虚拟机之内存模型与volatile
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-01-25 15:14:22 &#43;0000 UTC" itemprop="datePublished">2018-01-25</time>
+            &middot;
+            57
+            words
+            &middot;
+            1
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="硬件效率与一致性">硬件效率与一致性</h1>
+<p>尽管现代内存的速度在不断提高，但是内存的速度与cpu比起来还不在一个量级，为了提升计算速度，在内存和处理器之间加上一个高速缓存来作为内存和处理器之间的缓冲。基于高速缓存的方法很好的解决了处理器与内存的矛盾，但是也引入了一个新的问题：缓存一致性。每个处理器都有自己的高速缓存，而他们又共享一个主内存。当处理多个处理器的运算任务都涉及同一个主内存区域时，将可能导致各自的缓存数据不一致，如果真发生这种情况，将同步到主内存的数据到底以谁的缓存数据为准。为了解决一致性问题，需要各个处理器访问缓存时都遵循一些协议。</p>
+<p><img src="/images/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/1.png" alt="处理器、缓存、内存关系"></p>
+<p>除了增加高速缓存之外，为了使得处理器内部的运算单元尽可能被充分利用，处理器可能会对输入代码进行乱序执行优化，处理器会在计算之后将乱序执行的结果重组，保证该结果与顺序执行的结果是一致的，但并不保证程序中各个语句计算的先后顺序与代码中的顺序一致。因此，如果某个计算任务依赖另外一个计算任务的中间结果，那么其顺序性并不能靠代码的先后顺序来保证。Java虚拟机的即时编译器中也有类似的指令重排序优化。</p>
+<h1 id="java内存模型">Java内存模型</h1>
+<p>Jvava虚拟机规范中通过定义一种Java内存模型来屏蔽掉各种硬件和操作系统的内存差异，来实现Java程序在各种平台下都能达到一致的内存访问效果。</p>
+<h2 id="主内存与工作内存">主内存与工作内存</h2>
+<p>Java内存模型的主要目标是定义程序中各个变量的访问规则，即在虚拟机中将变量存储到内存和从内存中取出变量这样的底层细节。此处的变量与Java中的变量有所区别，它包括了实例字段、静态字段和构成数组对象的元素，但不包括局部变量和方法参数，因为后者是线程私有的，不会被共享，自然就不会存在竞争问题。</p>
+<p>Java内存模型规定了所有的变量都存储在主内存中。每个线程还有自己的工作内存，线程的工作内存中保存了被该线程中使用到的变量的主内存拷贝副本，线程对变量的所有操作都必须在工作内存中进行，而不能直接读写主内存中的变量。不同的线程之间也无法直接访问对方工作内存中的变量，线程间变量值的传递均需要通过主内存来完成。</p>
+<p><img src="/images/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/2.png" alt="线程、工作内存、主内存交互关系"></p>
+<h2 id="内存间交互操作">内存间交互操作</h2>
+<p>关于主内存与工作内存之间具体的交互协议，即一个变量如何从主内存拷贝到工作内存，如何从工作内存同步到主内存之类的同步细节，Java内存模型中定义了8种操作来完成。</p>
+<ul>
+<li>Lock（锁定）：作用于主内存的变量，他把变量标识为一个线程独占的状态。</li>
+<li>unlock(解锁) ：作用于主内存的变量，它把一个处于锁定状态的变量释放出来，释放后的变量才可以被其他线程锁定。</li>
+<li>read（读取）：作用于主内存的变量，它把一个变量的值从主内存中读取到线程工作内存中，以便随后的load动作使用。</li>
+<li>load（载入）：作用于工作内存中的变量，它把read操作从主内存中得到的变量值放入工作内存中的变量副本中。</li>
+<li>use（使用）：作用于工作内存的变量，它把工作内存中一个变量的值传递给执行引擎，每当虚拟机遇到一个需要使用到变量的值的字节码指令将会执行这个操作。</li>
+<li>assign（赋值）：作用于工作内存的变量，它把执行引擎接收到的值付给工作内存的变量，每当虚拟机遇到一个给变量赋值的字节码指令时执行这个操作。</li>
+<li>store（存储）：作用于工作内存的变量，它把工作内存中的一个变量的值传递到主内存中，以便随后的write操作使用。</li>
+<li>write（写入）：作用于主内存的变量，它把store操作从工作内存中得到的变量的值放入主内存的变量中。</li>
+</ul>
+<p>如果要把一个变量从主内存复制到工作内存，就要顺序地执行read和load操作，如果把变量从工作内存同步回主内存，就要顺序地执行store和write操作。Java内存模型还规定了在执行上述8种基本操作必须满足如下规则：</p>
+<ol>
+<li>不允许read和load。store和write操作之一单独出现。</li>
+<li>不允许一个线程丢弃它最近的assign操作，即变量在工作内存中改变了之后必须把该变化同步回主内存。</li>
+<li>不允许一个线程无原因的把数据从线程的工作内存同步回主内存。</li>
+<li>一个新的变量只能在主内存中诞生，不允许在工作内存中直接使用了一个未被初始化的变量，换句话说，就是一个变量实施use、store操作之前，必须先执行过了assign和load操作。</li>
+<li>一个变量在同一个时刻只允许一个线程对其进行lock操作，但lock操作可以被同一条操作重复执行多次，多次执行lock之后，只有执行相同次数的unlock操作，变量才会被解锁。</li>
+<li>如果对一个变量执行lock操作，那将会清空工作内存中此变量的值，在执行引擎使用这个变量前，需要重新load和assign操作初始化变量的值。</li>
+<li>如果一个变量实现没有被lock操作锁定，那就不允许对它执行unlock操作，也不允许去lock一个被其他线程锁定住的变量。</li>
+<li>对一个变量执行unlock操作之前，必须先把此变量同步回主内存中。</li>
+</ol>
+<h2 id="volatile">volatile</h2>
+<p>首先介绍一下volatile所修饰的变量的特性：</p>
+<p>第一是保证此变量对所有线程的可见性，这里的“可见性”是指当一个线程修改了这个变量的值，新值对于其他线程来说是可以立即得到的。而普通变量不能做到这一点，普通变量的值在线程间传递均需要通过主内存来完成。</p>
+<p>volatile的第二个作用是禁止指令重排序优化，普通的变量仅能保证在该方法的执行过程中所有依赖赋值结果的地方都能获取到正确的结果，而不能保证变量赋值操作的顺序与程序代码执行的顺序一致。</p>
+<h2 id="long和double型变量的特殊规则">long和double型变量的特殊规则</h2>
+<p>Java内存中对于lock、unlock、read、load、use、assign、store、write八种操作都是具有原子性的，但是对于64位的数据类型，在模型中特别定义了一条相对宽松的规定：允许虚拟机将没有被volatile关键字修饰的64位数据的读写操作划分为两次32位的操作来进行。即虚拟机实现选择可以不保证64位数据类型的load、store、read和write这4个操作的原子性。</p>
+<p>如果多个线程共享一个并未被声明为volatile的long和double类型的变量，并且同时对它们进行了读取和修改操作，那么某些线程可能读取到一个并非原值，也不是被其他线程修改的代表了“半个变量的数值”。</p>
+<p>为避免这种情况，现在的各种商用虚拟机几乎都选择把64位数据的读写操作作为原子操作来对待。因此我们在编写代码时一般不需把long和double变量专门声明为volatile。</p>
+<h2 id="原子性可见性和有序性">原子性、可见性和有序性</h2>
+<p>原子性：由Java内存模型来直接保证的原子性操作包括read,load,assign.use,store,和write。应用到更大的场景中时，Java内存模型还提供了lock和unlock操作来满足这个需求，尽管虚拟机未把lock和unlock操作直接开放给用户使用，但是却提供了更高层次的字节码指令monitorenter和monitorexit来隐式的使用这两个操作，这两个字节码反映到Java代码中就是同步块：synchronized关键字。因此在synchronized块之间的操作也具有原子性。</p>
+<p>可见性：可见性是指当一个线程修改了共享变量的值，其他线程能够立即得知这个修改。Java内存模型是通过在变量修改后将新值同步回主内存，在变量读取之前从主内存刷新左边两只这种依赖主内存作为传递媒介的方式来实现可见性，无论是普通变量还是volatile变量都是如此。普通变量和volatile变量的区别在于volatile变量的特殊规则保证了新值能够立即同步到主内存，以及每次使用前能够立即从主内存刷新。因此可以说volatile关键字保证了多线程操作时变量的可见性，而不同变量不能保证这一点。</p>
+<p>Java还有两个关键字来保证可见性：即synchronized和final。synchronized的可见性是由“一个变量执行unlock操作之前，必须先把变量同步回主内存中”这条规则获得的。final关键字的可见性是指:被final修饰的字段在构造器中一旦初始化完成，并且构造器没有把“this”引用传递出去，那么其他线程就能看见final关键字的值。</p>
+<p>有序性：如果在本线程中观察其他线程，所有操作都是无序的。Java语言提供了volatile和synchronized两个关键字来保证线程之间操作的有序性。而volatile关键字本身就包含了禁止指令重排序的语义，而synchronized则是由“一个变量在同一个时刻只允许一条线程对其进行lock操作”这条规则来获得的。这个规则决定了拥有同一个锁的两个同步块只能串行的进入。</p>
+<h1 id="先行发生原则happen-before原则">先行发生原则(happen-before原则)</h1>
+<p>如果Java内存中所有的有序性都是依靠volatile和synchronized来完成，那么有一些操作将会变得很繁琐。但是Java语言中有一个“先行发生”的原则。这个原则非常重要，它是判断数据是否存在竞争、线程是否安全的重要依据。</p>
+<p>先行发生原则：在Java内存模型中定义了两项操作顺序之间的偏序关系，如果操作A先行发生于操作B，其实就是说在发生操作B之前，操作A产生的影响能被操作B观察到，“影响”包括修改了内存中共享变量的值，发送了消息，调用了方法等。</p>
+<p>Java内存模型中包括下列一些天生发生的先行发生关系，如果两个操作之间不在此列，虚拟机可以对它们随意地进行重排序：</p>
+<ul>
+<li>程序次序执行规则：在一个线程内，按照代码顺序执行，前面的操作先行发生于书写在后面的操作。</li>
+<li>管程锁定规则：一个unlock操作先行发生于后面（时间上的先后）对同一个锁的lock操作。</li>
+<li>volatile变量规则：对于一个volatile变量的写操作先行发生于后面对这个变量的读操作。</li>
+<li>线程启动规则：Thread对象的start()方法先行发生于此线程的每一个动作。</li>
+<li>线程终止规则：线程的所有操作都先行发生于对此线程的终止操作</li>
+<li>线程中断规则：对线程interrupt（）方法的调用先行发生于被中断线程的代码检测到中断时间的发生。</li>
+<li>对象终结规则：一个对象的初始化完成先行发生于它的finalize（）方法的开始。</li>
+<li>传递性：若A先行于B发生，B先行于C，那么得出A先行于C</li>
+</ul>
+<p>我们衡量并发安全问题的时候不要受到时间顺序地干扰，必须以先行发生原则为准。</p>
+<h1 id="参考文献">参考文献</h1>
+<p>《深入理解Java虚拟机:JVM高级特性与最佳实践》 周志明著</p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" data-id="04074dbdf46e730a7cc9317080ac90b2" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Older
+      </strong>
+      <div class="article-nav-title">Java虚拟机之JVM内存区域与Java对象</div>
+    </a>
+    
+
+    
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Java虚拟机之垃圾回收机制</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java虚拟机之内存模型与volatile" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="title">Java虚拟机之JVM启动参数大全</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-02 10:47:12 &#43;0000 UTC" itemprop="datePublished">2018-02-02</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java虚拟机之内存模型与volatile" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="title">Java虚拟机之类加载器</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-01 16:17:23 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java虚拟机之内存模型与volatile" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之类加载机制</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-01 13:39:09 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java虚拟机之内存模型与volatile" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之垃圾回收机制</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-01-30 14:47:23 &#43;0000 UTC" itemprop="datePublished">2018-01-30</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java虚拟机之内存模型与volatile" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="title">Java虚拟机之内存模型与volatile</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-01-25 15:14:22 &#43;0000 UTC" itemprop="datePublished">2018-01-25</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

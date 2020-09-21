@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on 狄俊&#39;s blog</title>
+    <link>https://dijun.cf/post/</link>
+    <description>Recent content in Posts on 狄俊&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 02 Feb 2018 10:47:12 +0000</lastBuildDate><atom:link href="https://dijun.cf/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Java虚拟机之JVM启动参数大全</title>
+      <link>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/</link>
+      <pubDate>Fri, 02 Feb 2018 10:47:12 +0000</pubDate>
+      
+      <guid>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/</guid>
+      <description>&lt;h1 id=&#34;说明&#34;&gt;说明&lt;/h1&gt;
+&lt;p&gt;本文所有的参数是基于JDK7的HotSpot虚拟机，适用于JDK7及以前版本，JDK7后续版本参数是否有效请自测。&lt;/p&gt;
+&lt;p&gt;对于启用或关闭功能选项：-XX:+&amp;lt;option&amp;gt;打开某功能；-XX:-&amp;lt;option&amp;gt;关闭某功能；&lt;/p&gt;
+&lt;p&gt;对于数字型选项：-XX:&amp;lt;option&amp;gt;=&amp;lt;number&amp;gt;，若需要表示大小，可在数字后添加k、m、g；&lt;/p&gt;
+&lt;p&gt;对于字符串选项：-XX:&amp;lt;option&amp;gt;=&amp;lt;string&amp;gt;，用于指定文件，路径或命令列表；&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Java虚拟机之类加载器</title>
+      <link>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/</link>
+      <pubDate>Thu, 01 Feb 2018 16:17:23 +0000</pubDate>
+      
+      <guid>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/</guid>
+      <description>&lt;h1 id=&#34;类加载器介绍&#34;&gt;类加载器介绍&lt;/h1&gt;
+&lt;p&gt;类加载器负责将class文件加载到内存中，并为之生成对应的java.lang.Class对象。对于任意一个类，都需要加载它的类加载器和这个类本身来确定该类在JVM中唯一性，也就是说，同一个class文件用两个不同的类加载器加载并创建两个java.lang.Class对象，即使两个对象来源自同一个class文件，它们也是不相等的，这里“相等”包括Class对象的equals()方法、isAssignableFrom()方法、isInstance()方法，也包括使用instanceof关键字做对象所属关系判定情况。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Java虚拟机之类加载机制</title>
+      <link>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/</link>
+      <pubDate>Thu, 01 Feb 2018 13:39:09 +0000</pubDate>
+      
+      <guid>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/</guid>
+      <description>&lt;h1 id=&#34;概述&#34;&gt;概述&lt;/h1&gt;
+&lt;p&gt;Java虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。&lt;/p&gt;
+&lt;p&gt;与其他语言不同的是在Java语言里，类的加载、连接和初始化过程都是在程序运行期间完成的，Java里可动态扩展的语言特性就是依赖运行期动态加载和动态连接这个特点实现的。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Java虚拟机之垃圾回收机制</title>
+      <link>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/</link>
+      <pubDate>Tue, 30 Jan 2018 14:47:23 +0000</pubDate>
+      
+      <guid>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/</guid>
+      <description>&lt;h1 id=&#34;概述&#34;&gt;概述&lt;/h1&gt;
+&lt;p&gt;在Java堆中，同一个接口中的多个实现类需要的内存是不一样的，一个方法中的多个分支需要的内存也不一样，Java程序只有在处于运行期间才能知道会创建哪些对象，这部分内存的分配和回收都是动态的，垃圾收集器所关注的是这部分内存。本文将讲述Java自动内存管理中，Java虚拟机对内存的回收机制。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Java虚拟机之内存模型与volatile</title>
+      <link>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/</link>
+      <pubDate>Thu, 25 Jan 2018 15:14:22 +0000</pubDate>
+      
+      <guid>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/</guid>
+      <description>&lt;h1 id=&#34;硬件效率与一致性&#34;&gt;硬件效率与一致性&lt;/h1&gt;
+&lt;p&gt;尽管现代内存的速度在不断提高，但是内存的速度与cpu比起来还不在一个量级，为了提升计算速度，在内存和处理器之间加上一个高速缓存来作为内存和处理器之间的缓冲。基于高速缓存的方法很好的解决了处理器与内存的矛盾，但是也引入了一个新的问题：缓存一致性。每个处理器都有自己的高速缓存，而他们又共享一个主内存。当处理多个处理器的运算任务都涉及同一个主内存区域时，将可能导致各自的缓存数据不一致，如果真发生这种情况，将同步到主内存的数据到底以谁的缓存数据为准。为了解决一致性问题，需要各个处理器访问缓存时都遵循一些协议。&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Java虚拟机之JVM内存区域与Java对象</title>
+      <link>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/</link>
+      <pubDate>Wed, 10 Jan 2018 18:33:18 +0000</pubDate>
+      
+      <guid>https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/</guid>
+      <description>&lt;h1 id=&#34;前言&#34;&gt;前言&lt;/h1&gt;
+&lt;p&gt;最近第七次拜读《深入理解Java虚拟机:JVM高级特性与最佳实践》，每次读都有不同的收获，为了以防自己读后忘记，同时为了加深理解，准备写一系列JVM相关文章。能力有限，文中大部分内容均由本人整理总结自《深入理解Java虚拟机:JVM高级特性与最佳实践》，文中出现错误的地方请见谅。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

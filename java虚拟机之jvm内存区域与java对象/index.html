@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Java虚拟机之JVM内存区域与Java对象 &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Java虚拟机之JVM内存区域与Java对象" />
+<meta property="og:description" content="前言
+最近第七次拜读《深入理解Java虚拟机:JVM高级特性与最佳实践》，每次读都有不同的收获，为了以防自己读后忘记，同时为了加深理解，准备写一系列JVM相关文章。能力有限，文中大部分内容均由本人整理总结自《深入理解Java虚拟机:JVM高级特性与最佳实践》，文中出现错误的地方请见谅。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/" />
+<meta property="article:published_time" content="2018-01-10T18:33:18+00:00" />
+<meta property="article:modified_time" content="2018-01-10T18:33:18+00:00" />
+
+    
+    <meta itemprop="name" content="Java虚拟机之JVM内存区域与Java对象">
+<meta itemprop="description" content="前言
+最近第七次拜读《深入理解Java虚拟机:JVM高级特性与最佳实践》，每次读都有不同的收获，为了以防自己读后忘记，同时为了加深理解，准备写一系列JVM相关文章。能力有限，文中大部分内容均由本人整理总结自《深入理解Java虚拟机:JVM高级特性与最佳实践》，文中出现错误的地方请见谅。">
+<meta itemprop="datePublished" content="2018-01-10T18:33:18+00:00" />
+<meta itemprop="dateModified" content="2018-01-10T18:33:18+00:00" />
+<meta itemprop="wordCount" content="37">
+
+
+
+<meta itemprop="keywords" content="Java,Java虚拟机,JVM," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Java虚拟机之JVM内存区域与Java对象"/>
+<meta name="twitter:description" content="前言
+最近第七次拜读《深入理解Java虚拟机:JVM高级特性与最佳实践》，每次读都有不同的收获，为了以防自己读后忘记，同时为了加深理解，准备写一系列JVM相关文章。能力有限，文中大部分内容均由本人整理总结自《深入理解Java虚拟机:JVM高级特性与最佳实践》，文中出现错误的地方请见谅。"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+          <a class="main-nav-link" href="/about/">About</a>
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+          <td><a class="main-nav-link" href="/about/">About</a></td>
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        6
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          3
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner3.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/">
+    <h1 class="article-title" itemprop="name">
+        Java虚拟机之JVM内存区域与Java对象
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-01-10 18:33:18 &#43;0000 UTC" itemprop="datePublished">2018-01-10</time>
+            &middot;
+            37
+            words
+            &middot;
+            1
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="前言">前言</h1>
+<p>最近第七次拜读《深入理解Java虚拟机:JVM高级特性与最佳实践》，每次读都有不同的收获，为了以防自己读后忘记，同时为了加深理解，准备写一系列JVM相关文章。能力有限，文中大部分内容均由本人整理总结自《深入理解Java虚拟机:JVM高级特性与最佳实践》，文中出现错误的地方请见谅。</p>
+<h1 id="jvm内存区域">JVM内存区域</h1>
+<p>对于c、c++程序员而言，需要手动去管理自己创建对象所占用内存的销毁。而对于Java程序员而言，虚拟机帮你完成了这部分工作。Java虚拟机在运行时会将它所管理的内存划分为若干个不同的数据区域，我们一般把这叫做JVM的内存模型。</p>
+<p>JVM运行时内存区域可分为：<strong>虚拟机栈、本地方法栈、程序计数器、方法区、堆</strong>；其中虚拟机栈、本地方法栈和程序计数器为线程安全区域，而方法区和堆为线程不安全区域；如下图所示：
+<img src="/images/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8BJVM%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8EJava%E5%AF%B9%E8%B1%A1/1.png" alt="JVM运行时内存区域"></p>
+<h2 id="虚拟机栈">虚拟机栈</h2>
+<p>顾名思义，虚拟机栈是用于供程序使用的栈内存，它的生命周期与线程相同，虚拟机栈会在每个方法执行时创建一个栈帧，栈帧中存储着<strong>局部变量表、操作数栈、动态连接、方法出口等</strong>。当程序运行所需栈内存超过栈的大小虚拟机会抛出StackOverflowError异常，此时可通过JVM虚拟机参数—Xss调整栈大小；当机器可用物理内存小于JVM虚拟机栈所需内存时会抛出OutOfMemoryError异常。<strong>笔者在Linux上基于HotSpot虚拟机测得虚拟机栈默认大小为1024kb</strong></p>
+<p>其中<strong>局部变量表</strong>存放着编译期间可知的各种基本数据类型（boolean、byte、char、short、int、float、long、double）、对象的引用、返回地址；局部变量表的大小在编译期间就已经知道了，除64位long和double占用两个局部变量空间（Slot）外，其余均只占用一个局部变量表。<strong>方法在运行期间不会改变局部变量表大小。</strong></p>
+<p><strong>操作数栈</strong>：方法执行中进行算术运算或者是调用其他的方法进行参数传递的时候是通过操作数栈进行的。</p>
+<p><strong>动态连接</strong>：Class 文件中存放了大量的符号引用，字节码中的方法调用指令就是以常量池中指向方法的符号引用作为参数。这些符号引用一部分会在类加载阶段或第一次使用时转化为直接引用，这种转化称为静态解析。另一部分将在每一次运行期间转化为直接引用，这部分称为动态连接。</p>
+<p><strong>返回地址</strong>中存放的是方法执行完之后返回地址。</p>
+<h2 id="本地方法栈">本地方法栈</h2>
+<p>本地方法栈与虚拟机栈的作用是类似的，不同的是：虚拟机栈是为执行Java方法服务而本地方法栈是为虚拟机使用到的Native方法服务。<strong>值得注意的是在sun公司的HotSpot虚拟机上，本地方法栈与虚拟机栈是合并在一起的。</strong></p>
+<h2 id="程序计数器">程序计数器</h2>
+<p>程序计数器可以看作是当前线程所执行的字节码的行号指示器，每个线程都有一个独立的程序计数器，各线程之间互不影响。<strong>若线程正在执行一个Native方法，则此时该线程的程序计数器为空。</strong></p>
+<h2 id="方法区">方法区</h2>
+<p>方法区用于存储被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据。方法区也称之为“永久代”。</p>
+<p>值得一说的是，在方法区中有一个运行时常量池（注意我说的是运行时的常量池），对于Java class文件也有一个常量池。运行时常量池是class文件常量池中编译期间生成的各种已知的字面量和符号引用，在class文件首次被虚拟机加载时载入方法区的运行时常量池。运行时常量池具备动态特性，不止只有class文件中常量池才能进入方法区运行时常量池，运行期间也可能将新的常量放入其中，例如String类的intern()方法。另外值得注意的是在JDK1.7之后的HotSpot虚拟机，字符串常量池已不在方法区，而在堆内存之中。</p>
+<h2 id="堆">堆</h2>
+<p>Java虚拟机规范中描述：所有的对象实例以及数组都要在堆上分配内存。也就是说堆主要是存放对象实例的。</p>
+<p>堆内存大小可通过-Xms、-Xmx控制大小。JVM虚拟机的垃圾收集器主要活动的区域也是这块区域。对于堆内存还可分为<strong>新生代和老年代</strong>，其中默认情况下新生代占堆内存大小的三分之一，老年代占堆内存大小的三分之二，可通过参数-XX:NewRatio控制这个比例的大小。对于新生代还可分为<strong>Eden区和两个Survivor区</strong>其大小比为8：1：1。大内存对象直接分配在老年代，小内存对象分配在新生代Eden中GC一次后“搬移”到Survivor区，在Survivor区存活若干次GC后将会被“搬移”至老年代。关于GC相关的我会在后续文章中详细说明。</p>
+<h1 id="java对象">Java对象</h1>
+<h2 id="对象的创建">对象的创建</h2>
+<p>在Java程序运行时，运行至对象创建指令（new、克隆、反序列化等）时，首先将检查这个指令的参数是否能在常量池中定位到一个类的符号引用，并检查这个符号引用代表的类是否已被加载、解析和初始化。如果没有，必须先执行相应的类加载过程。</p>
+<p>类加载检查后虚拟机将为类分配内存，对象所需内存大小在类加载完后即可确定。为类分配内存有两种方式：一是若Java堆中内存是绝对规整的，所有使用中的内存放一边，空闲内存放另一边，中间放着一个指针作为分界点的指示器，分配内存时只需将指针向空闲空间那边移动一段与对象大小相等的距离，这种分配方式称之为**“指针碰撞”**。另一种是Java堆不是规整的，虚拟机维护了一个队列，队列记录了哪些内存块是可用的，在分配内存时从列表中找一块足够大的空间划分给对象实例，并更新记录，这种分配方式称之为**“空闲列表”。**</p>
+<p>在并发情况下，对象创建的原子性是靠虚拟机通过CAS与失败重试保证的。另外可通过参数-XX:+/-UseTLAB来保证对象创建的原子性，TLAB是每个线程在Java堆中预先分配一块小的内存，称之为本地线程分配缓冲（TLAB）,对象首先在各自线程的TLAB中分配内存，只有当TLAB不够用需要重新分配TLAB时，才会同步锁定。</p>
+<h2 id="对象内存布局">对象内存布局</h2>
+<p>对象在内存中存储可分为三块区：对象头、实例数据、对齐填充。</p>
+<p>对象头一部分存储对象自身运行时数据（HashCode、GC分代年龄、锁状态标志、线程持有的锁、偏向线程ID、偏向时间戳等），另一部分是类型指针，即对象指向它的元数据的指针，虚拟机通过这个指针来确定这个对象是哪个类的实例。</p>
+<h2 id="对象在堆内存的访问定位">对象在堆内存的访问定位</h2>
+<p>Java程序通过栈上reference数据来操作堆上对象实例，reference可能指向堆中的一个句柄池，句柄池中存放着堆中对象实例的地址和方法区中对象类型数据的地址；</p>
+<p><img src="/images/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8BJVM%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8EJava%E5%AF%B9%E8%B1%A1/2.jpg" alt="句柄池实现访问定位"></p>
+<p>reference中也有可能直接存放着堆中实例对象地址，在对象头中存放着方法区对象类型数据地址。对象类型数据笔者认为是虚拟机从磁盘中class文件加载进方法区的对象类型数据。</p>
+<p><img src="/images/Java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8BJVM%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8EJava%E5%AF%B9%E8%B1%A1/3.jpg" alt="对象类型数据指针访问定位"></p>
+<h1 id="参考文献">参考文献</h1>
+<p>《深入理解Java虚拟机:JVM高级特性与最佳实践》 周志明著</p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/" data-id="bd42d6cfec57d02a514aa74b10e1110a" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+
+    
+    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Java虚拟机之内存模型与volatile</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java虚拟机之JVM内存区域与Java对象" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="title">Java虚拟机之JVM启动参数大全</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-02 10:47:12 &#43;0000 UTC" itemprop="datePublished">2018-02-02</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java虚拟机之JVM内存区域与Java对象" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="title">Java虚拟机之类加载器</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-01 16:17:23 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java虚拟机之JVM内存区域与Java对象" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之类加载机制</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-02-01 13:39:09 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java虚拟机之JVM内存区域与Java对象" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之垃圾回收机制</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-01-30 14:47:23 &#43;0000 UTC" itemprop="datePublished">2018-01-30</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java虚拟机之JVM内存区域与Java对象" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                        Java虚拟机
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="title">Java虚拟机之内存模型与volatile</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-01-25 15:14:22 &#43;0000 UTC" itemprop="datePublished">2018-01-25</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>
