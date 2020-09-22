@@ -27,7 +27,7 @@
 <meta property="og:description" content="" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://dijun.cf/" />
-<meta property="og:updated_time" content="2018-02-02T10:47:12+00:00" />
+<meta property="og:updated_time" content="2018-06-26T14:40:31+00:00" />
 
     
     <meta itemprop="name" content="狄俊&#39;s blog">
@@ -159,12 +159,12 @@
     </div>
     <div class="article-info profile-block">
       <div class="article-info-block">
-        6
+        16
         <span>Posts</span>
       </div>
       <div class="article-info-block">
         
-          3
+          5
         
         <span>
             Tags
@@ -242,16 +242,16 @@
 <article class="article article-type-post" itemscope="" itemprop="blogPost">
     <div class="article-inner">
         
-        <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" itemprop="url">
+        <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" itemprop="url">
             
-            <img src="/banners/banner2.jpg" class="article-banner">
+            <img src="/banners/banner3.jpg" class="article-banner">
         
         </a>
 
         <header class="article-header">
-    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/">
+    <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
     <h1 class="article-title" itemprop="name">
-        Java虚拟机之JVM启动参数大全
+        Spring Task源码分析
     </h1>
     </a>
     <div class="article-meta">
@@ -259,12 +259,12 @@
         
         <div class="article-date">
             <i class="fa fa-calendar"></i>
-            <time datetime="2018-02-02 10:47:12 &#43;0000 UTC" itemprop="datePublished">2018-02-02</time>
+            <time datetime="2018-06-26 14:40:31 &#43;0000 UTC" itemprop="datePublished">2018-06-26</time>
             &middot;
-            251
+            450
             words
             &middot;
-            2
+            3
             minute read
         </div>
         
@@ -275,7 +275,7 @@
                 <i class="fa fa-folder"></i>
                 
                 
-                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
                 
                 
             </div>
@@ -289,15 +289,7 @@
                 <i class="fa fa-tags"></i>
                 
                 
-                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
                 
                 
             </div>
@@ -308,20 +300,22 @@
 
         <div class="article-entry" itemprop="articleBody">
             <p>
-                <h1 id="说明">说明</h1>
-<p>本文所有的参数是基于JDK7的HotSpot虚拟机，适用于JDK7及以前版本，JDK7后续版本参数是否有效请自测。</p>
-<p>对于启用或关闭功能选项：-XX:+&lt;option&gt;打开某功能；-XX:-&lt;option&gt;关闭某功能；</p>
-<p>对于数字型选项：-XX:&lt;option&gt;=&lt;number&gt;，若需要表示大小，可在数字后添加k、m、g；</p>
-<p>对于字符串选项：-XX:&lt;option&gt;=&lt;string&gt;，用于指定文件，路径或命令列表；</p>
+                <h1 id="开头">开头</h1>
+<p>从功能上来说，spring-task这个组件主要包括了两个/两种功能:</p>
+<ul>
+<li>任务的定时调度/执行，对应xml配置的task:scheduler和task:scheduled-tasks标签。</li>
+<li>方法异步执行，对应xml配置的task:executor标签。</li>
+</ul>
+<p>task:annotation-driven标签被以上两种功能共有。下面就这两种功能分别进行说明。</p>
             </p>
             <p class="article-more-link">
-                <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/">
+                <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
                     Read more
                 </a>
             </p>
         </div>
         <footer class="article-footer">
-    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" data-id="773214a7d08030221df320106f624fa9" class="article-share-link">
+    <a data-url="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="8a59111ac3db51bc139e5a6057676704" class="article-share-link">
         <i class="fa fa-share"></i>
         Share
     </a>
@@ -399,16 +393,16 @@
 <article class="article article-type-post" itemscope="" itemprop="blogPost">
     <div class="article-inner">
         
-        <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" itemprop="url">
+        <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" itemprop="url">
             
             <img src="/banners/banner4.jpg" class="article-banner">
         
         </a>
 
         <header class="article-header">
-    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/">
+    <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
     <h1 class="article-title" itemprop="name">
-        Java虚拟机之类加载器
+        Spring Mvc源码分析
     </h1>
     </a>
     <div class="article-meta">
@@ -416,9 +410,1062 @@
         
         <div class="article-date">
             <i class="fa fa-calendar"></i>
-            <time datetime="2018-02-01 16:17:23 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
+            <time datetime="2018-06-25 15:03:57 &#43;0000 UTC" itemprop="datePublished">2018-06-25</time>
             &middot;
-            305
+            2161
+            words
+            &middot;
+            11
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <p>
+                <h1 id="初始化">初始化</h1>
+<p>spring-mvc的核心便是DispatcherServlet，所以初始化也是围绕其展开的。类图:</p>
+            </p>
+            <p class="article-more-link">
+                <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                    Read more
+                </a>
+            </p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="4b11c018282cf5e98ff66d2d435ef9cc" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+</article>
+
+<article class="article article-type-post" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+        <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" itemprop="url">
+            
+            <img src="/banners/banner4.jpg" class="article-banner">
+        
+        </a>
+
+        <header class="article-header">
+    <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+    <h1 class="article-title" itemprop="name">
+        Spring Transaction源码分析
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-06-15 14:57:50 &#43;0000 UTC" itemprop="datePublished">2018-06-15</time>
+            &middot;
+            1538
+            words
+            &middot;
+            8
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <p>
+                <h1 id="配置">配置</h1>
+<p>以最简单的jdbc事务为例:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#75715e">&lt;!-- 数据源以Sping自带为例，每次请求均返回一个新的连接 --&gt;</span>
+<span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">id=</span><span style="color:#e6db74">&#34;dataSource&#34;</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;org.springframework.jdbc.datasource.DriverManagerDataSource&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;driverClassName&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.driverClassName}&#34;</span> <span style="color:#f92672">/&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;url&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.url}&#34;</span> <span style="color:#f92672">/&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;username&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.username}&#34;</span> <span style="color:#f92672">/&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;password&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.password}&#34;</span> <span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+<span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">id=</span><span style="color:#e6db74">&#34;transactionManager&#34;</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;org.springframework.jdbc.datasource.DataSourceTransactionManager&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;dataSource&#34;</span> <span style="color:#a6e22e">ref=</span><span style="color:#e6db74">&#34;dataSource&#34;</span><span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+<span style="color:#f92672">&lt;tx:annotation-driven</span> <span style="color:#a6e22e">transaction-manager=</span><span style="color:#e6db74">&#34;transactionManager&#34;</span><span style="color:#f92672">/&gt;</span>
+</code></pre></div>
+            </p>
+            <p class="article-more-link">
+                <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                    Read more
+                </a>
+            </p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="cbd2c2a7afbdc03a7589c645c0008b6d" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+</article>
+
+<article class="article article-type-post" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+        <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" itemprop="url">
+            
+            <img src="/banners/banner4.jpg" class="article-banner">
+        
+        </a>
+
+        <header class="article-header">
+    <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+    <h1 class="article-title" itemprop="name">
+        Spring Context源码分析
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-06-06 23:19:43 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+            &middot;
+            3892
+            words
+            &middot;
+            19
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <p>
+                <h1 id="开头">开头</h1>
+<p>入口方法在BeanDefinitionParserDelegate.parseCustomElement：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">return</span> handler<span style="color:#f92672">.</span><span style="color:#a6e22e">parse</span><span style="color:#f92672">(</span>ele<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> ParserContext<span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">readerContext</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> containingBd<span style="color:#f92672">));</span>
+</code></pre></div>
+            </p>
+            <p class="article-more-link">
+                <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                    Read more
+                </a>
+            </p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="e7ce2275fb2667042c1be3be5ad7e858" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+</article>
+
+<article class="article article-type-post" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+        <a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" itemprop="url">
+            
+            <img src="/banners/banner1.jpg" class="article-banner">
+        
+        </a>
+
+        <header class="article-header">
+    <a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+    <h1 class="article-title" itemprop="name">
+        Spring Aop源码分析
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-06-06 12:08:31 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+            &middot;
+            1841
+            words
+            &middot;
+            9
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <p>
+                <h1 id="开头">开头</h1>
+<p>aop部分的解析器由<code>AopNamespaceHandler</code>注册，其<code>init</code>方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">init</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;config&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> ConfigBeanDefinitionParser<span style="color:#f92672">());</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;aspectj-autoproxy&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> AspectJAutoProxyBeanDefinitionParser<span style="color:#f92672">());</span>
+    registerBeanDefinitionDecorator<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;scoped-proxy&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> ScopedProxyBeanDefinitionDecorator<span style="color:#f92672">());</span>
+<span style="color:#f92672">}</span>
+</code></pre></div>
+            </p>
+            <p class="article-more-link">
+                <a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                    Read more
+                </a>
+            </p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="c67be83e48f571b08313e0d07f6b4d94" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+</article>
+
+<article class="article article-type-post" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+        <a href="https://dijun.cf/spring-core%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" itemprop="url">
+            
+            <img src="/banners/banner4.jpg" class="article-banner">
+        
+        </a>
+
+        <header class="article-header">
+    <a href="https://dijun.cf/spring-core%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+    <h1 class="article-title" itemprop="name">
+        Spring Core源码分析
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-06-06 11:50:05 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+            &middot;
+            4176
+            words
+            &middot;
+            20
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <p>
+                <h1 id="基本">基本</h1>
+<p>本部分从最基本的Spring开始。配置文件:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#75715e">&lt;?xml version=&#34;1.0&#34; encoding=&#34;UTF-8&#34;?&gt;</span>    
+<span style="color:#f92672">&lt;beans&gt;</span>    
+    <span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;base.SimpleBean&#34;</span><span style="color:#f92672">&gt;&lt;/bean&gt;</span>
+<span style="color:#f92672">&lt;/beans&gt;</span>
+</code></pre></div>
+            </p>
+            <p class="article-more-link">
+                <a href="https://dijun.cf/spring-core%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+                    Read more
+                </a>
+            </p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring-core%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="14005851f3fa212f7b7b2ad2d74df7b1" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+</article>
+
+<article class="article article-type-post" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+        <a href="https://dijun.cf/spring%E6%A8%A1%E5%9D%97%E8%A7%A3%E8%AF%BB/" itemprop="url">
+            
+            <img src="/banners/banner3.jpg" class="article-banner">
+        
+        </a>
+
+        <header class="article-header">
+    <a href="https://dijun.cf/spring%E6%A8%A1%E5%9D%97%E8%A7%A3%E8%AF%BB/">
+    <h1 class="article-title" itemprop="name">
+        Spring模块解读
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-04-26 16:04:49 &#43;0000 UTC" itemprop="datePublished">2018-04-26</time>
+            &middot;
+            60
+            words
+            &middot;
+            1
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <p>
+                <h1 id="spring模块">spring模块</h1>
+<p>Spring框架的功能被有组织的分散到约20个模块中。这些模块分布在核心容器，数据访问/集成，Web，AOP（面向切面​​的编程），植入(Instrumentation)，消息传输和测试，如下面的图所示。</p>
+            </p>
+            <p class="article-more-link">
+                <a href="https://dijun.cf/spring%E6%A8%A1%E5%9D%97%E8%A7%A3%E8%AF%BB/">
+                    Read more
+                </a>
+            </p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring%E6%A8%A1%E5%9D%97%E8%A7%A3%E8%AF%BB/" data-id="fdd62a5cab25666ab426ff25777dc8a6" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+</article>
+
+<article class="article article-type-post" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+        <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/" itemprop="url">
+            
+            <img src="/banners/banner2.jpg" class="article-banner">
+        
+        </a>
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/">
+    <h1 class="article-title" itemprop="name">
+        Java容器源码分析之HashMap与HashSet
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-04-07 13:00:57 &#43;0000 UTC" itemprop="datePublished">2018-04-07</time>
+            &middot;
+            1025
+            words
+            &middot;
+            5
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/java">Java</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">容器</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <p>
+                <h1 id="hashmap与hashset介绍">HashMap与HashSet介绍</h1>
+<p>HashMap是Java为我们提供的一个存放键值对的容器，通过键的hash值定位存储位置，具有很快的访问速度。但是其遍历顺序是不确定的，这里所说的不确定是指其遍历的顺序与放入顺序不一致、多次遍历输出顺序不一致(可能会放进数据导致reHash，改变原有顺序)。HashMap允许有一个null的键，对于值没做要求。HashMap也是个非线程安全的容器，在并发环境下可以使用ynchronizedMap方法使HashMap具有线程安全的能力，或者使用ConcurrentHashMap。</p>
+<p>HashSet是Java为我们提供的一个集合类容器，他不允许容器内元素重复，底层采用HashMap实现(适配器模式)。</p>
+            </p>
+            <p class="article-more-link">
+                <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/">
+                    Read more
+                </a>
+            </p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/" data-id="f4a8934de66f67bfadb00947f249c29f" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+</article>
+
+<article class="article article-type-post" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+        <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Blinkedlist/" itemprop="url">
+            
+            <img src="/banners/banner4.jpg" class="article-banner">
+        
+        </a>
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Blinkedlist/">
+    <h1 class="article-title" itemprop="name">
+        Java容器源码分析之LinkedList
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-03-28 10:07:33 &#43;0000 UTC" itemprop="datePublished">2018-03-28</time>
+            &middot;
+            341
             words
             &middot;
             2
@@ -432,7 +1479,7 @@
                 <i class="fa fa-folder"></i>
                 
                 
-                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                <a class="article-category-link" href="https://dijun.cf/categories/java">Java</a>
                 
                 
             </div>
@@ -450,11 +1497,7 @@
                 &middot;
                 
                 
-                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
+                <a class="article-category-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">容器</a>
                 
                 
             </div>
@@ -465,17 +1508,17 @@
 
         <div class="article-entry" itemprop="articleBody">
             <p>
-                <h1 id="类加载器介绍">类加载器介绍</h1>
-<p>类加载器负责将class文件加载到内存中，并为之生成对应的java.lang.Class对象。对于任意一个类，都需要加载它的类加载器和这个类本身来确定该类在JVM中唯一性，也就是说，同一个class文件用两个不同的类加载器加载并创建两个java.lang.Class对象，即使两个对象来源自同一个class文件，它们也是不相等的，这里“相等”包括Class对象的equals()方法、isAssignableFrom()方法、isInstance()方法，也包括使用instanceof关键字做对象所属关系判定情况。</p>
+                <h1 id="linkedlist简介">LinkedList简介</h1>
+<p>LinkedList是一个使用双向链表结构实现的容器，与ArrayList一样，它能动态扩充其长度，LinkedList相较于ArrayList，其任意位置插入速度比ArrayList要快，但是其查询速度要比ArrayList要慢；LinkedList继承自AbstractSequentialList，实现了List、Deque、Cloneable、Serializable接口。</p>
             </p>
             <p class="article-more-link">
-                <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/">
+                <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Blinkedlist/">
                     Read more
                 </a>
             </p>
         </div>
         <footer class="article-footer">
-    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" data-id="b88cae57ad0216beac3e2219e3c06f01" class="article-share-link">
+    <a data-url="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Blinkedlist/" data-id="5cda13af9f556512e0451ddfb61bde36" class="article-share-link">
         <i class="fa fa-share"></i>
         Share
     </a>
@@ -553,171 +1596,16 @@
 <article class="article article-type-post" itemscope="" itemprop="blogPost">
     <div class="article-inner">
         
-        <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" itemprop="url">
-            
-            <img src="/banners/banner3.jpg" class="article-banner">
-        
-        </a>
-
-        <header class="article-header">
-    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">
-    <h1 class="article-title" itemprop="name">
-        Java虚拟机之类加载机制
-    </h1>
-    </a>
-    <div class="article-meta">
-
-        
-        <div class="article-date">
-            <i class="fa fa-calendar"></i>
-            <time datetime="2018-02-01 13:39:09 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
-            &middot;
-            202
-            words
-            &middot;
-            1
-            minute read
-        </div>
-        
-        
-            
-            
-            <div class="article-category">
-                <i class="fa fa-folder"></i>
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                
-                
-            </div>
-            
-        
-
-        
-            
-            
-            <div class="article-category">
-                <i class="fa fa-tags"></i>
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
-                
-                
-            </div>
-            
-        
-    </div>
-</header>
-
-        <div class="article-entry" itemprop="articleBody">
-            <p>
-                <h1 id="概述">概述</h1>
-<p>Java虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。</p>
-<p>与其他语言不同的是在Java语言里，类的加载、连接和初始化过程都是在程序运行期间完成的，Java里可动态扩展的语言特性就是依赖运行期动态加载和动态连接这个特点实现的。</p>
-            </p>
-            <p class="article-more-link">
-                <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/">
-                    Read more
-                </a>
-            </p>
-        </div>
-        <footer class="article-footer">
-    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" data-id="a3ce08b3ba6e37fd528780ba281a57b8" class="article-share-link">
-        <i class="fa fa-share"></i>
-        Share
-    </a>
-    
-
-    <script>
-    (function ($) {
-        
-        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
-            __SHARE_BUTTON_BINDED__ = true;
-        } else {
-            return;
-        }
-        $('body').on('click', function() {
-            $('.article-share-box.on').removeClass('on');
-        }).on('click', '.article-share-link', function(e) {
-            e.stopPropagation();
-
-            var $this = $(this),
-                url = $this.attr('data-url'),
-                encodedUrl = encodeURIComponent(url),
-                id = 'article-share-box-' + $this.attr('data-id'),
-                offset = $this.offset(),
-                box;
-
-            if ($('#' + id).length) {
-                box = $('#' + id);
-
-                if (box.hasClass('on')){
-                    box.removeClass('on');
-                    return;
-                }
-            } else {
-                var html = [
-                    '<div id="' + id + '" class="article-share-box">',
-                        '<input class="article-share-input" value="' + url + '">',
-                        '<div class="article-share-links">',
-                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
-                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
-                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
-                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
-                        '</div>',
-                    '</div>'
-                ].join('');
-
-              box = $(html);
-
-              $('body').append(box);
-            }
-
-            $('.article-share-box.on').hide();
-
-            box.css({
-                top: offset.top + 25,
-                left: offset.left
-            }).addClass('on');
-
-        }).on('click', '.article-share-box', function (e) {
-            e.stopPropagation();
-        }).on('click', '.article-share-box-input', function () {
-            $(this).select();
-        }).on('click', '.article-share-box-link', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
-        });
-    })(jQuery);
-    </script>
-</footer>
-
-    </div>
-</article>
-
-<article class="article article-type-post" itemscope="" itemprop="blogPost">
-    <div class="article-inner">
-        
-        <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" itemprop="url">
+        <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Barraylist/" itemprop="url">
             
             <img src="/banners/banner1.jpg" class="article-banner">
         
         </a>
 
         <header class="article-header">
-    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
+    <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Barraylist/">
     <h1 class="article-title" itemprop="name">
-        Java虚拟机之垃圾回收机制
+        Java容器源码分析之ArrayList
     </h1>
     </a>
     <div class="article-meta">
@@ -725,12 +1613,12 @@
         
         <div class="article-date">
             <i class="fa fa-calendar"></i>
-            <time datetime="2018-01-30 14:47:23 &#43;0000 UTC" itemprop="datePublished">2018-01-30</time>
+            <time datetime="2018-03-27 16:28:47 &#43;0000 UTC" itemprop="datePublished">2018-03-27</time>
             &middot;
-            74
+            320
             words
             &middot;
-            1
+            2
             minute read
         </div>
         
@@ -741,7 +1629,7 @@
                 <i class="fa fa-folder"></i>
                 
                 
-                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
+                <a class="article-category-link" href="https://dijun.cf/categories/java">Java</a>
                 
                 
             </div>
@@ -759,11 +1647,7 @@
                 &middot;
                 
                 
-                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
+                <a class="article-category-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">容器</a>
                 
                 
             </div>
@@ -774,325 +1658,17 @@
 
         <div class="article-entry" itemprop="articleBody">
             <p>
-                <h1 id="概述">概述</h1>
-<p>在Java堆中，同一个接口中的多个实现类需要的内存是不一样的，一个方法中的多个分支需要的内存也不一样，Java程序只有在处于运行期间才能知道会创建哪些对象，这部分内存的分配和回收都是动态的，垃圾收集器所关注的是这部分内存。本文将讲述Java自动内存管理中，Java虚拟机对内存的回收机制。</p>
+                <h1 id="arraylist简介">ArrayList简介</h1>
+<p>ArrayList是一个使用数组实现的容器，与普通的数组相比，它能动态的扩容，ArrayList继承自AbstractList，实现了List、RandomAccess、Cloneable、Serializable接口。</p>
             </p>
             <p class="article-more-link">
-                <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/">
+                <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Barraylist/">
                     Read more
                 </a>
             </p>
         </div>
         <footer class="article-footer">
-    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" data-id="145335492c19080bf1df849c1aa53c71" class="article-share-link">
-        <i class="fa fa-share"></i>
-        Share
-    </a>
-    
-
-    <script>
-    (function ($) {
-        
-        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
-            __SHARE_BUTTON_BINDED__ = true;
-        } else {
-            return;
-        }
-        $('body').on('click', function() {
-            $('.article-share-box.on').removeClass('on');
-        }).on('click', '.article-share-link', function(e) {
-            e.stopPropagation();
-
-            var $this = $(this),
-                url = $this.attr('data-url'),
-                encodedUrl = encodeURIComponent(url),
-                id = 'article-share-box-' + $this.attr('data-id'),
-                offset = $this.offset(),
-                box;
-
-            if ($('#' + id).length) {
-                box = $('#' + id);
-
-                if (box.hasClass('on')){
-                    box.removeClass('on');
-                    return;
-                }
-            } else {
-                var html = [
-                    '<div id="' + id + '" class="article-share-box">',
-                        '<input class="article-share-input" value="' + url + '">',
-                        '<div class="article-share-links">',
-                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
-                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
-                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
-                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
-                        '</div>',
-                    '</div>'
-                ].join('');
-
-              box = $(html);
-
-              $('body').append(box);
-            }
-
-            $('.article-share-box.on').hide();
-
-            box.css({
-                top: offset.top + 25,
-                left: offset.left
-            }).addClass('on');
-
-        }).on('click', '.article-share-box', function (e) {
-            e.stopPropagation();
-        }).on('click', '.article-share-box-input', function () {
-            $(this).select();
-        }).on('click', '.article-share-box-link', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
-        });
-    })(jQuery);
-    </script>
-</footer>
-
-    </div>
-</article>
-
-<article class="article article-type-post" itemscope="" itemprop="blogPost">
-    <div class="article-inner">
-        
-        <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" itemprop="url">
-            
-            <img src="/banners/banner3.jpg" class="article-banner">
-        
-        </a>
-
-        <header class="article-header">
-    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/">
-    <h1 class="article-title" itemprop="name">
-        Java虚拟机之内存模型与volatile
-    </h1>
-    </a>
-    <div class="article-meta">
-
-        
-        <div class="article-date">
-            <i class="fa fa-calendar"></i>
-            <time datetime="2018-01-25 15:14:22 &#43;0000 UTC" itemprop="datePublished">2018-01-25</time>
-            &middot;
-            57
-            words
-            &middot;
-            1
-            minute read
-        </div>
-        
-        
-            
-            
-            <div class="article-category">
-                <i class="fa fa-folder"></i>
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                
-                
-            </div>
-            
-        
-
-        
-            
-            
-            <div class="article-category">
-                <i class="fa fa-tags"></i>
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
-                
-                
-            </div>
-            
-        
-    </div>
-</header>
-
-        <div class="article-entry" itemprop="articleBody">
-            <p>
-                <h1 id="硬件效率与一致性">硬件效率与一致性</h1>
-<p>尽管现代内存的速度在不断提高，但是内存的速度与cpu比起来还不在一个量级，为了提升计算速度，在内存和处理器之间加上一个高速缓存来作为内存和处理器之间的缓冲。基于高速缓存的方法很好的解决了处理器与内存的矛盾，但是也引入了一个新的问题：缓存一致性。每个处理器都有自己的高速缓存，而他们又共享一个主内存。当处理多个处理器的运算任务都涉及同一个主内存区域时，将可能导致各自的缓存数据不一致，如果真发生这种情况，将同步到主内存的数据到底以谁的缓存数据为准。为了解决一致性问题，需要各个处理器访问缓存时都遵循一些协议。</p>
-            </p>
-            <p class="article-more-link">
-                <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/">
-                    Read more
-                </a>
-            </p>
-        </div>
-        <footer class="article-footer">
-    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" data-id="04074dbdf46e730a7cc9317080ac90b2" class="article-share-link">
-        <i class="fa fa-share"></i>
-        Share
-    </a>
-    
-
-    <script>
-    (function ($) {
-        
-        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
-            __SHARE_BUTTON_BINDED__ = true;
-        } else {
-            return;
-        }
-        $('body').on('click', function() {
-            $('.article-share-box.on').removeClass('on');
-        }).on('click', '.article-share-link', function(e) {
-            e.stopPropagation();
-
-            var $this = $(this),
-                url = $this.attr('data-url'),
-                encodedUrl = encodeURIComponent(url),
-                id = 'article-share-box-' + $this.attr('data-id'),
-                offset = $this.offset(),
-                box;
-
-            if ($('#' + id).length) {
-                box = $('#' + id);
-
-                if (box.hasClass('on')){
-                    box.removeClass('on');
-                    return;
-                }
-            } else {
-                var html = [
-                    '<div id="' + id + '" class="article-share-box">',
-                        '<input class="article-share-input" value="' + url + '">',
-                        '<div class="article-share-links">',
-                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
-                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
-                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
-                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
-                        '</div>',
-                    '</div>'
-                ].join('');
-
-              box = $(html);
-
-              $('body').append(box);
-            }
-
-            $('.article-share-box.on').hide();
-
-            box.css({
-                top: offset.top + 25,
-                left: offset.left
-            }).addClass('on');
-
-        }).on('click', '.article-share-box', function (e) {
-            e.stopPropagation();
-        }).on('click', '.article-share-box-input', function () {
-            $(this).select();
-        }).on('click', '.article-share-box-link', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
-        });
-    })(jQuery);
-    </script>
-</footer>
-
-    </div>
-</article>
-
-<article class="article article-type-post" itemscope="" itemprop="blogPost">
-    <div class="article-inner">
-        
-        <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/" itemprop="url">
-            
-            <img src="/banners/banner1.jpg" class="article-banner">
-        
-        </a>
-
-        <header class="article-header">
-    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/">
-    <h1 class="article-title" itemprop="name">
-        Java虚拟机之JVM内存区域与Java对象
-    </h1>
-    </a>
-    <div class="article-meta">
-
-        
-        <div class="article-date">
-            <i class="fa fa-calendar"></i>
-            <time datetime="2018-01-10 18:33:18 &#43;0000 UTC" itemprop="datePublished">2018-01-10</time>
-            &middot;
-            37
-            words
-            &middot;
-            1
-            minute read
-        </div>
-        
-        
-            
-            
-            <div class="article-category">
-                <i class="fa fa-folder"></i>
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                
-                
-            </div>
-            
-        
-
-        
-            
-            
-            <div class="article-category">
-                <i class="fa fa-tags"></i>
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">Java虚拟机</a>
-                &middot;
-                
-                
-                <a class="article-category-link" href="https://dijun.cf/tags/jvm">JVM</a>
-                
-                
-            </div>
-            
-        
-    </div>
-</header>
-
-        <div class="article-entry" itemprop="articleBody">
-            <p>
-                <h1 id="前言">前言</h1>
-<p>最近第七次拜读《深入理解Java虚拟机:JVM高级特性与最佳实践》，每次读都有不同的收获，为了以防自己读后忘记，同时为了加深理解，准备写一系列JVM相关文章。能力有限，文中大部分内容均由本人整理总结自《深入理解Java虚拟机:JVM高级特性与最佳实践》，文中出现错误的地方请见谅。</p>
-            </p>
-            <p class="article-more-link">
-                <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/">
-                    Read more
-                </a>
-            </p>
-        </div>
-        <footer class="article-footer">
-    <a data-url="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8Ejava%E5%AF%B9%E8%B1%A1/" data-id="bd42d6cfec57d02a514aa74b10e1110a" class="article-share-link">
+    <a data-url="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Barraylist/" data-id="8a798d092948b59929a536726541dc94" class="article-share-link">
         <i class="fa fa-share"></i>
         Share
     </a>
@@ -1170,6 +1746,13 @@
 
 <nav id="page-nav">
 
+    
+    
+        <a class="extend next" rel="next" href="https://dijun.cf/page/2/">
+            Next »
+        </a>
+    
+
 </nav>
 
 
@@ -1188,10 +1771,10 @@
             
             <li>
                 <div class="item-thumbnail">
-                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="thumbnail">
+                    <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
                     
                         
-                        <span style="background-image:url(/banners/banner1.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
                     
                     </a>
                 </div>
@@ -1200,76 +1783,22 @@
                     
                     <p class="item-category">
                         
-                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
-                        Java虚拟机
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
                         </a>
                     </p>
                     
                     
-                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8Bjvm%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%A4%A7%E5%85%A8/" class="title">Java虚拟机之JVM启动参数大全</a></p>
+                    <p class="item-title"><a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Task源码分析</a></p>
                     <p class="item-date">
-                        <time datetime="2018-02-02 10:47:12 &#43;0000 UTC" itemprop="datePublished">2018-02-02</time>
+                        <time datetime="2018-06-26 14:40:31 &#43;0000 UTC" itemprop="datePublished">2018-06-26</time>
                     </p>
                 </div>
             </li>
             
             <li>
                 <div class="item-thumbnail">
-                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="thumbnail">
-                    
-                        
-                        <span style="background-image:url(/banners/banner3.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
-                    
-                    </a>
-                </div>
-                <div class="item-inner">
-                    
-                    
-                    <p class="item-category">
-                        
-                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
-                        Java虚拟机
-                        </a>
-                    </p>
-                    
-                    
-                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8/" class="title">Java虚拟机之类加载器</a></p>
-                    <p class="item-date">
-                        <time datetime="2018-02-01 16:17:23 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
-                    </p>
-                </div>
-            </li>
-            
-            <li>
-                <div class="item-thumbnail">
-                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="thumbnail">
-                    
-                        
-                        <span style="background-image:url(/banners/banner3.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
-                    
-                    </a>
-                </div>
-                <div class="item-inner">
-                    
-                    
-                    <p class="item-category">
-                        
-                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
-                        Java虚拟机
-                        </a>
-                    </p>
-                    
-                    
-                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之类加载机制</a></p>
-                    <p class="item-date">
-                        <time datetime="2018-02-01 13:39:09 &#43;0000 UTC" itemprop="datePublished">2018-02-01</time>
-                    </p>
-                </div>
-            </li>
-            
-            <li>
-                <div class="item-thumbnail">
-                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="thumbnail">
+                    <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
                     
                         
                         <span style="background-image:url(/banners/banner4.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
@@ -1281,22 +1810,22 @@
                     
                     <p class="item-category">
                         
-                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
-                        Java虚拟机
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
                         </a>
                     </p>
                     
                     
-                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E6%9C%BA%E5%88%B6/" class="title">Java虚拟机之垃圾回收机制</a></p>
+                    <p class="item-title"><a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Mvc源码分析</a></p>
                     <p class="item-date">
-                        <time datetime="2018-01-30 14:47:23 &#43;0000 UTC" itemprop="datePublished">2018-01-30</time>
+                        <time datetime="2018-06-25 15:03:57 &#43;0000 UTC" itemprop="datePublished">2018-06-25</time>
                     </p>
                 </div>
             </li>
             
             <li>
                 <div class="item-thumbnail">
-                    <a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="thumbnail">
+                    <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
                     
                         
                         <span style="background-image:url(/banners/banner1.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
@@ -1308,15 +1837,69 @@
                     
                     <p class="item-category">
                         
-                        <a class="article-category-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
-                        Java虚拟机
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
                         </a>
                     </p>
                     
                     
-                    <p class="item-title"><a href="https://dijun.cf/java%E8%99%9A%E6%8B%9F%E6%9C%BA%E4%B9%8B%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8Evolatile/" class="title">Java虚拟机之内存模型与volatile</a></p>
+                    <p class="item-title"><a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Transaction源码分析</a></p>
                     <p class="item-date">
-                        <time datetime="2018-01-25 15:14:22 &#43;0000 UTC" itemprop="datePublished">2018-01-25</time>
+                        <time datetime="2018-06-15 14:57:50 &#43;0000 UTC" itemprop="datePublished">2018-06-15</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Context源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 23:19:43 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="狄俊&#39;s blog" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Aop源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 12:08:31 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
                     </p>
                 </div>
             </li>
@@ -1336,10 +1919,26 @@
             
             <li class="category-list-item">
                 
+                <a class="category-list-link" href="https://dijun.cf/categories/java">
+                    java
+                </a>
+                <span class="category-list-count">3</span>
+            </li>
+            
+            <li class="category-list-item">
+                
                 <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
                     java虚拟机
                 </a>
                 <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
             </li>
             
         </ul>
@@ -1364,7 +1963,7 @@
                 <a class="category-list-link" href="https://dijun.cf/tags/java">
                     java
                 </a>
-                <span class="category-list-count">6</span>
+                <span class="category-list-count">9</span>
             </li>
             
             <li class="category-list-item">
@@ -1381,6 +1980,22 @@
                     jvm
                 </a>
                 <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">
+                    容器
+                </a>
+                <span class="category-list-count">3</span>
             </li>
             
         </ul>
@@ -1407,6 +2022,12 @@
         
         
         <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+        
+        <a href="https://dijun.cf/tags/spring" style="font-size: 12px;">spring</a>
+        
+        
+        <a href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8" style="font-size: 12px;">容器</a>
         
     </div>
 </div>

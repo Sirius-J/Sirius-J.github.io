@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Spring Mvc源码分析 &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Spring Mvc源码分析" />
+<meta property="og:description" content="初始化
+spring-mvc的核心便是DispatcherServlet，所以初始化也是围绕其展开的。类图:" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" />
+<meta property="article:published_time" content="2018-06-25T15:03:57+00:00" />
+<meta property="article:modified_time" content="2018-06-25T15:03:57+00:00" />
+
+    
+    <meta itemprop="name" content="Spring Mvc源码分析">
+<meta itemprop="description" content="初始化
+spring-mvc的核心便是DispatcherServlet，所以初始化也是围绕其展开的。类图:">
+<meta itemprop="datePublished" content="2018-06-25T15:03:57+00:00" />
+<meta itemprop="dateModified" content="2018-06-25T15:03:57+00:00" />
+<meta itemprop="wordCount" content="2161">
+
+
+
+<meta itemprop="keywords" content="spring," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Spring Mvc源码分析"/>
+<meta name="twitter:description" content="初始化
+spring-mvc的核心便是DispatcherServlet，所以初始化也是围绕其展开的。类图:"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+          <a class="main-nav-link" href="/about/">About</a>
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+          <td><a class="main-nav-link" href="/about/">About</a></td>
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        16
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          5
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner3.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+    <h1 class="article-title" itemprop="name">
+        Spring Mvc源码分析
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-06-25 15:03:57 &#43;0000 UTC" itemprop="datePublished">2018-06-25</time>
+            &middot;
+            2161
+            words
+            &middot;
+            11
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="初始化">初始化</h1>
+<p>spring-mvc的核心便是DispatcherServlet，所以初始化也是围绕其展开的。类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/DispatcherServlet.jpg" alt="DispatcherServlet类图"></p>
+<p>Servlet标准定义了init方法是其生命周期的初始化方法。</p>
+<p>HttpServletBean.init:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">init</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> ServletException <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// Set bean properties from init parameters.
+</span><span style="color:#75715e"></span>    PropertyValues pvs <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ServletConfigPropertyValues<span style="color:#f92672">(</span>getServletConfig<span style="color:#f92672">(),</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">requiredProperties</span><span style="color:#f92672">);</span>
+    <span style="color:#75715e">//包装DispatcherServlet，准备放入容器
+</span><span style="color:#75715e"></span>    BeanWrapper bw <span style="color:#f92672">=</span> PropertyAccessorFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">forBeanPropertyAccess</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>
+    <span style="color:#75715e">//用以加载spring-mvc配置文件
+</span><span style="color:#75715e"></span>    ResourceLoader resourceLoader <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ServletContextResourceLoader<span style="color:#f92672">(</span>getServletContext<span style="color:#f92672">());</span>
+    bw<span style="color:#f92672">.</span><span style="color:#a6e22e">registerCustomEditor</span><span style="color:#f92672">(</span>Resource<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> ResourceEditor<span style="color:#f92672">(</span>resourceLoader<span style="color:#f92672">,</span> getEnvironment<span style="color:#f92672">()));</span>
+    <span style="color:#75715e">//没有子类实现此方法
+</span><span style="color:#75715e"></span>    initBeanWrapper<span style="color:#f92672">(</span>bw<span style="color:#f92672">);</span>
+    bw<span style="color:#f92672">.</span><span style="color:#a6e22e">setPropertyValues</span><span style="color:#f92672">(</span>pvs<span style="color:#f92672">,</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+    <span style="color:#75715e">// Let subclasses do whatever initialization they like.
+</span><span style="color:#75715e"></span>    initServletBean<span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>主要逻辑一目了然。注意<strong>setPropertyValues方法会导致对DispatcherServlet相关setter方法的调用，所以当进行容器初始化时从init-param中读取的参数已被设置到DispatcherServlet的相关字段(Field)中</strong>。</p>
+<h2 id="容器初始化">容器初始化</h2>
+<p>FrameworkServlet.initServletBean简略版源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">initServletBean</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">webApplicationContext</span> <span style="color:#f92672">=</span> initWebApplicationContext<span style="color:#f92672">();</span>
+    <span style="color:#75715e">//空实现，且没有子类覆盖
+</span><span style="color:#75715e"></span>    initFrameworkServlet<span style="color:#f92672">()</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>FrameworkServlet.initWebApplicationContext:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> WebApplicationContext <span style="color:#a6e22e">initWebApplicationContext</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">//根容器查找
+</span><span style="color:#75715e"></span>    WebApplicationContext rootContext <span style="color:#f92672">=</span>
+            WebApplicationContextUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getWebApplicationContext</span><span style="color:#f92672">(</span>getServletContext<span style="color:#f92672">());</span>
+    WebApplicationContext wac <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">webApplicationContext</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//有可能DispatcherServlet被作为Spring bean初始化，且webApplicationContext已被注入进来
+</span><span style="color:#75715e"></span>        wac <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">webApplicationContext</span><span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>wac <span style="color:#66d9ef">instanceof</span> ConfigurableWebApplicationContext<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            ConfigurableWebApplicationContext cwac <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>ConfigurableWebApplicationContext<span style="color:#f92672">)</span> wac<span style="color:#f92672">;</span>
+            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>cwac<span style="color:#f92672">.</span><span style="color:#a6e22e">isActive</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>cwac<span style="color:#f92672">.</span><span style="color:#a6e22e">getParent</span><span style="color:#f92672">()</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                    cwac<span style="color:#f92672">.</span><span style="color:#a6e22e">setParent</span><span style="color:#f92672">(</span>rootContext<span style="color:#f92672">);</span>
+                <span style="color:#f92672">}</span>
+                configureAndRefreshWebApplicationContext<span style="color:#f92672">(</span>cwac<span style="color:#f92672">);</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>wac <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//是否已经存在于ServletContext中
+</span><span style="color:#75715e"></span>        wac <span style="color:#f92672">=</span> findWebApplicationContext<span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>wac <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        wac <span style="color:#f92672">=</span> createWebApplicationContext<span style="color:#f92672">(</span>rootContext<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">refreshEventReceived</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        onRefresh<span style="color:#f92672">(</span>wac<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">publishContext</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        String attrName <span style="color:#f92672">=</span> getServletContextAttributeName<span style="color:#f92672">();</span>
+        getServletContext<span style="color:#f92672">().</span><span style="color:#a6e22e">setAttribute</span><span style="color:#f92672">(</span>attrName<span style="color:#f92672">,</span> wac<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> wac<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>下面分部分展开。</p>
+<h3 id="根容器查找">根容器查找</h3>
+<p>spring-mvc支持Spring容器与MVC容器共存，此时，Spring容器即根容器，mvc容器将根容器视为父容器。</p>
+<p>Spring容器(根容器)以下列形式进行配置(web.xml):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;listener&gt;</span>
+    <span style="color:#f92672">&lt;listener-class&gt;</span>org.springframework.web.context.ContextLoaderListener<span style="color:#f92672">&lt;/listener-class&gt;</span>
+<span style="color:#f92672">&lt;/listener&gt;</span>
+</code></pre></div><p>根据Servlet规范，各组件的加载 顺序如下:</p>
+<p>listener -&gt; filter -&gt; servlet</p>
+<p>WebApplicationContextUtils.getWebApplicationContext:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">String ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE <span style="color:#f92672">=</span> WebApplicationContext<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;.ROOT&#34;</span><span style="color:#f92672">;</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> WebApplicationContext <span style="color:#a6e22e">getWebApplicationContext</span><span style="color:#f92672">(</span>ServletContext sc<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> getWebApplicationContext<span style="color:#f92672">(</span>sc<span style="color:#f92672">,</span> WebApplicationContext<span style="color:#f92672">.</span><span style="color:#a6e22e">ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>两参数方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> WebApplicationContext <span style="color:#a6e22e">getWebApplicationContext</span><span style="color:#f92672">(</span>ServletContext sc<span style="color:#f92672">,</span> String attrName<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Object attr <span style="color:#f92672">=</span> sc<span style="color:#f92672">.</span><span style="color:#a6e22e">getAttribute</span><span style="color:#f92672">(</span>attrName<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>attr <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>WebApplicationContext<span style="color:#f92672">)</span> attr<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以得出结论:</p>
+<p><strong>如果Spring根容器存在，那么它被保存在ServletContext中，其key为<code>WebApplicationContext.class.getName() + &quot;.ROOT&quot;</code>。</strong></p>
+<h3 id="容器创建">容器创建</h3>
+<p>FrameworkServlet.createWebApplicationContext:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> WebApplicationContext <span style="color:#a6e22e">createWebApplicationContext</span><span style="color:#f92672">(</span>ApplicationContext parent<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Class<span style="color:#f92672">&lt;?&gt;</span> contextClass <span style="color:#f92672">=</span> getContextClass<span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>ConfigurableWebApplicationContext<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">isAssignableFrom</span><span style="color:#f92672">(</span>contextClass<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> ApplicationContextException<span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    ConfigurableWebApplicationContext wac <span style="color:#f92672">=</span>
+            <span style="color:#f92672">(</span>ConfigurableWebApplicationContext<span style="color:#f92672">)</span> BeanUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">instantiateClass</span><span style="color:#f92672">(</span>contextClass<span style="color:#f92672">);</span>
+    wac<span style="color:#f92672">.</span><span style="color:#a6e22e">setEnvironment</span><span style="color:#f92672">(</span>getEnvironment<span style="color:#f92672">());</span>
+    wac<span style="color:#f92672">.</span><span style="color:#a6e22e">setParent</span><span style="color:#f92672">(</span>parent<span style="color:#f92672">);</span>
+    wac<span style="color:#f92672">.</span><span style="color:#a6e22e">setConfigLocation</span><span style="color:#f92672">(</span>getContextConfigLocation<span style="color:#f92672">());</span>
+    configureAndRefreshWebApplicationContext<span style="color:#f92672">(</span>wac<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">return</span> wac<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>通过对getContextClass方法的调用，Spring允许我们自定义容器的类型，即我们可以在web.xml中如下配置:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;servlet&gt;</span>
+    <span style="color:#f92672">&lt;servlet-name&gt;</span>SpringMVC<span style="color:#f92672">&lt;/servlet-name&gt;</span>
+    <span style="color:#f92672">&lt;servlet-class&gt;</span>org.springframework.web.servlet.DispatcherServlet<span style="color:#f92672">&lt;/servlet-class&gt;</span>
+    <span style="color:#75715e">&lt;!-- 配置文件位置 --&gt;</span>
+    <span style="color:#f92672">&lt;init-param&gt;</span>
+        <span style="color:#f92672">&lt;param-name&gt;</span>contextConfigLocation<span style="color:#f92672">&lt;/param-name&gt;</span>
+        <span style="color:#f92672">&lt;param-value&gt;</span>classpath:spring-servlet.xml<span style="color:#f92672">&lt;/param-value&gt;</span>
+    <span style="color:#f92672">&lt;/init-param&gt;</span>
+    <span style="color:#75715e">&lt;!-- 容器类型 --&gt;</span>
+    <span style="color:#f92672">&lt;init-param&gt;</span>
+        <span style="color:#f92672">&lt;param-name&gt;</span>contextClass<span style="color:#f92672">&lt;/param-name&gt;</span>
+        <span style="color:#f92672">&lt;param-value&gt;</span>java.lang.Object<span style="color:#f92672">&lt;/param-value&gt;</span>
+    <span style="color:#f92672">&lt;/init-param&gt;</span>
+<span style="color:#f92672">&lt;/servlet&gt;</span>
+</code></pre></div><p>configureAndRefreshWebApplicationContext核心源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">configureAndRefreshWebApplicationContext</span><span style="color:#f92672">(</span>ConfigurableWebApplicationContext wac<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    applyInitializers<span style="color:#f92672">(</span>wac<span style="color:#f92672">);</span>
+    wac<span style="color:#f92672">.</span><span style="color:#a6e22e">refresh</span><span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h4 id="applicationcontextinitializer">ApplicationContextInitializer</h4>
+<p>ApplicationContextInitializer允许我们在Spring(mvc)容器初始化之前干点坏事，可以通过init-param传入:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;init-param&gt;</span>
+    <span style="color:#f92672">&lt;param-name&gt;</span>contextInitializerClasses<span style="color:#f92672">&lt;/param-name&gt;</span>
+    <span style="color:#f92672">&lt;param-value&gt;</span>坏事儿<span style="color:#f92672">&lt;/param-value&gt;</span>
+<span style="color:#f92672">&lt;/init-param&gt;</span>
+</code></pre></div><p>applyInitializers方法正是要触发这些坏事儿。类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/ApplicationContextInitializer.jpg" alt="ApplicationContextInitializer类图"></p>
+<h4 id="配置解析">配置解析</h4>
+<p>&ldquo;配置&quot;指的便是spring-servlet.xml:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;context:component-scan</span> <span style="color:#a6e22e">base-package=</span><span style="color:#e6db74">&#34;controller&#34;</span><span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;mvc:annotation-driven/&gt;</span>
+<span style="color:#75715e">&lt;!-- 启用对静态资源使用默认servlet处理，非REST方式不需要 --&gt;</span>
+<span style="color:#f92672">&lt;mvc:default-servlet-handler/&gt;</span>
+<span style="color:#75715e">&lt;!-- 配置视图 --&gt;</span>
+<span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;org.springframework.web.servlet.view.UrlBasedViewResolver&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#75715e">&lt;!-- viewClass属性必不可少 --&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;viewClass&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;org.springframework.web.servlet.view.JstlView&#34;</span><span style="color:#f92672">&gt;&lt;/property&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;prefix&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;/WEB-INF/&#34;</span><span style="color:#f92672">&gt;&lt;/property&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;suffix&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;.jsp&#34;</span><span style="color:#f92672">&gt;&lt;/property&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+</code></pre></div><p>而解析的入口便在于对refresh方法的调用，此方法位于AbstractApplicationContext，这一点在spring-core时已经见过了，下面我们重点关注不同于spring-core的地方。</p>
+<p>对于spring-mvc来说，其容器默认为XmlWebApplicationContext，部分类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/XmlWebApplicationContext.jpg" alt="XmlWebApplicationContext类图"></p>
+<p>XmlWebApplicationContext通过重写loadBeanDefinitions方法改变了bean加载行为，使其指向spring-servlet.xml。</p>
+<p>spring-servlet.xml中不同于spring-core的地方便在于引入了mvc命名空间，正如spring-core中笔记中所说的那样，<strong>Spring用过jar包/META-INFO中的.handlers文件定义针对不同的命名空间所使用的解析器</strong>。</p>
+<p>mvc命名空间的解析器为MvcNamespaceHandler，部分源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">init</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;annotation-driven&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> AnnotationDrivenBeanDefinitionParser<span style="color:#f92672">());</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;default-servlet-handler&#34;</span><span style="color:#f92672">,</span> 
+                                 <span style="color:#66d9ef">new</span> DefaultServletHandlerBeanDefinitionParser<span style="color:#f92672">());</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;interceptors&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> IanterceptorsBeanDefinitionParser<span style="color:#f92672">());</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;view-resolvers&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> ViewResolversBeanDefinitionParser<span style="color:#f92672">());</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>老样子，按部分展开。</p>
+<h5 id="注解驱动">注解驱动</h5>
+<p>其parse方法负责向Sprng容器注册一些必要的组件，整理如下图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/mvc-annotation.png" alt="mvc-annotation"></p>
+<h5 id="静态资源处理">静态资源处理</h5>
+<p>即:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;mvc:default-servlet-handler/&gt;</span>
+</code></pre></div><p>DefaultServletHandlerBeanDefinitionParser.parse负责向容器注册以下三个组件:</p>
+<ul>
+<li>DefaultServletHttpRequestHandler</li>
+<li>SimpleUrlHandlerMapping</li>
+<li>HttpRequestHandlerAdapter</li>
+</ul>
+<h5 id="拦截器">拦截器</h5>
+<p>InterceptorsBeanDefinitionParser.parse方法负责<strong>将每一项<code>mvc:interceptor</code>配置解析为一个MappedInterceptor bean并注册到容器中</strong>。</p>
+<h5 id="视图">视图</h5>
+<p>有两种方式向Spring容器注册视图:</p>
+<ul>
+<li>
+<p>以前采用较土的方式:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;org.springframework.web.servlet.view.UrlBasedViewResolver&#34;</span><span style="color:#f92672">&gt;</span>
+  <span style="color:#75715e">&lt;!-- viewClass属性必不可少 --&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;viewClass&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;org.springframework.web.servlet.view.JstlView&#34;</span><span style="color:#f92672">&gt;&lt;/property&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;prefix&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;/WEB-INF/&#34;</span><span style="color:#f92672">&gt;&lt;/property&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;suffix&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;.jsp&#34;</span><span style="color:#f92672">&gt;&lt;/property&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+</code></pre></div></li>
+<li>
+<p>通过特定的标签:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;mvc:view-resolvers&gt;</span>
+  <span style="color:#f92672">&lt;mvc:jsp</span> <span style="color:#a6e22e">view-class=</span><span style="color:#e6db74">&#34;&#34;</span> <span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;/mvc:view-resolvers&gt;</span>
+</code></pre></div></li>
+</ul>
+<p>从这里可以推测出: 拦截器同样支持第一种方式，Spring在查找时应该会查询某一接口的子类。</p>
+<p>ViewResolversBeanDefinitionParser.parse方法的作用便是将每一个视图解析为ViewResolver并注册到容器。</p>
+<h4 id="scope处理器注册">Scope/处理器注册</h4>
+<p>AbstractRefreshableWebApplicationContext.postProcessBeanFactory:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">postProcessBeanFactory</span><span style="color:#f92672">(</span>ConfigurableListableBeanFactory beanFactory<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    beanFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">addBeanPostProcessor</span><span style="color:#f92672">(</span>
+        <span style="color:#66d9ef">new</span> ServletContextAwareProcessor<span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">servletContext</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">servletConfig</span><span style="color:#f92672">));</span>
+    beanFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">ignoreDependencyInterface</span><span style="color:#f92672">(</span>ServletContextAware<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+    beanFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">ignoreDependencyInterface</span><span style="color:#f92672">(</span>ServletConfigAware<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+    WebApplicationContextUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">registerWebApplicationScopes</span><span style="color:#f92672">(</span>beanFactory<span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">servletContext</span><span style="color:#f92672">);</span>
+    WebApplicationContextUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">registerEnvironmentBeans</span><span style="color:#f92672">(</span>beanFactory<span style="color:#f92672">,</span> 
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">servletContext</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">servletConfig</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>ServletContextAwareProcessor用以向实现了ServletContextAware的bean注册ServletContext。</p>
+<p>registerWebApplicationScopes用以注册&quot;request&rdquo;, &ldquo;session&rdquo;, &ldquo;globalSession&rdquo;, &ldquo;application&quot;四种scope，scope是个什么东西以及如何自定义，在spring-core中已经进行过说明了。</p>
+<p>registerEnvironmentBeans用以将servletContext、servletConfig以及各种启动参数注册到Spring容器中。</p>
+<h2 id="mvc初始化">MVC初始化</h2>
+<p>入口位于DispatcherServlet的initStrategies方法(经由onRefresh调用):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">initStrategies</span><span style="color:#f92672">(</span>ApplicationContext context<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    initMultipartResolver<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initLocaleResolver<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initThemeResolver<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initHandlerMappings<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initHandlerAdapters<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initHandlerExceptionResolvers<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initRequestToViewNameTranslator<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initViewResolvers<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+    initFlashMapManager<span style="color:#f92672">(</span>context<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>显然，这里就是spring-mvc的核心了。</p>
+<h3 id="文件上传支持">文件上传支持</h3>
+<p>initMultipartResolver核心源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">initMultipartResolver</span><span style="color:#f92672">(</span>ApplicationContext context<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">multipartResolver</span> <span style="color:#f92672">=</span> context<span style="color:#f92672">.</span><span style="color:#a6e22e">getBean</span><span style="color:#f92672">(</span>MULTIPART_RESOLVER_BEAN_NAME<span style="color:#f92672">,</span> MultipartResolver<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>NoSuchBeanDefinitionException ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// Default is no multipart resolver.
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">multipartResolver</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>MultipartResolver用于开启Spring MVC文件上传功能，其类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/MultipartResolver.jpg" alt="MultipartResolver类图"></p>
+<p>也就是说，如果我们要使用文件上传功能，须在容器中注册一个MultipartResolver bean。当然，默认是没有的。</p>
+<h3 id="地区解析器">地区解析器</h3>
+<p>LocaleResolver接口定义了Spring MVC如何获取客户端(浏览器)的地区，initLocaleResolver方法在容器中寻找此bean，如果没有，注册AcceptHeaderLocaleResolver，即根据request的请求头<strong>Accept-Language</strong>获取地区。</p>
+<p>spring-mvc采用了属性文件的方式配置默认策略(即bean)，此文件位于spring-mvc的jar包的org.springframework.web.servlet下。</p>
+<h3 id="主题解析器">主题解析器</h3>
+<p>ThemeResolver接口配合Spring标签库使用可以通过动态决定使用的css以及图片的方式达到换肤的效果，其类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/ThemeResolver.jpg" alt="ThemeResolver类图"></p>
+<p>如果容器中不存在叫做themeResolver的bean，initThemeResolver方法将向容器中注册FixedThemeResolver，此bean只能提供一套默认的主题，名为theme。</p>
+<h3 id="handlermapping检查">HandlerMapping检查</h3>
+<p>initHandlerMappings方法用于确保容器中<strong>至少含有一个HandlerMapping对象</strong>。从前面配置解析-注解驱动一节中可以看出，注解驱动导致已经注册了两个此对象。</p>
+<p>如果没有开启注解驱动，那么将会使用默认的HandlerMapping，相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">handlerMappings</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">handlerMappings</span> <span style="color:#f92672">=</span> getDefaultStrategies<span style="color:#f92672">(</span>context<span style="color:#f92672">,</span> HandlerMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>logger<span style="color:#f92672">.</span><span style="color:#a6e22e">isDebugEnabled</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        logger<span style="color:#f92672">.</span><span style="color:#a6e22e">debug</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;No HandlerMappings found in servlet &#39;&#34;</span> <span style="color:#f92672">+</span> getServletName<span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;&#39;: using default&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>前面提到了，默认的策略由DispatcherServlet.properties决定，<strong>目前是BeanNameUrlHandlerMapping和DefaultAnnotationHandlerMapping</strong>。</p>
+<h3 id="handleradapter检查">HandlerAdapter检查</h3>
+<p>套路和上面完全一样，默认使用HttpRequestHandlerAdapter、SimpleControllerHandlerAdapter和AnnotationMethodHandlerAdapter。</p>
+<h3 id="handlerexceptionresolver检查">HandlerExceptionResolver检查</h3>
+<p>套路和上面完全一样，默认使用AnnotationMethodHandlerExceptionResolver、ResponseStatusExceptionResolver、DefaultHandlerExceptionResolver。</p>
+<h3 id="requesttoviewnametranslator">RequestToViewNameTranslator</h3>
+<p>initRequestToViewNameTranslator方法回向容器中注册一个DefaultRequestToViewNameTranslator对象，此接口用以完成从HttpServletRequest到视图名的解析，其使用场景是<strong>给定的URL无法匹配任何控制器时</strong>。</p>
+<p>DefaultRequestToViewNameTranslator的转换例子:</p>
+<p>http://localhost:8080/gamecast/display.html -&gt; display(视图)</p>
+<p>其类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/RequestToViewNameTranslator.jpg" alt="RequestToViewNameTranslator类图"></p>
+<h3 id="viewresolver检查">ViewResolver检查</h3>
+<p>熟悉的套路，默认使用InternalResourceViewResolver。</p>
+<h3 id="flashmapmanager">FlashMapManager</h3>
+<p>initFlashMapManager方法会向容器注册SessionFlashMapManager对象，类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/FlashMapManager.jpg" alt="FlashMapManager类图"></p>
+<p>此接口和FlashMap搭配使用，用于在<strong>请求重定向时保存/传递参数</strong>。</p>
+<h2 id="handlermapping初始化">HandlerMapping初始化</h2>
+<p>此接口用以根据请求的URL寻找合适的处理器。从前面配置解析一节可以看出，我们的容器中有三个HandlerMapping实现，下面以RequestMappingHandlerMapping位代表进行说明。</p>
+<h3 id="requestmappinghandlermapping">RequestMappingHandlerMapping</h3>
+<p>此实现根据@Controller和@RequestMapping注解完成解析。类图(忽略部分接口):</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/RequestMappingHandlerMapping.jpg" alt="RequestMappingHandlerMapping类图"></p>
+<p>初始化的入口位于AbstractHandlerMethodMapping的afterPropertiesSet方法和AbstractHandlerMapping的initApplicationContext方法，afterPropertiesSet调用了initHandlerMethods:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">initHandlerMethods</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">//获取容器中所有的bean
+</span><span style="color:#75715e"></span>    String<span style="color:#f92672">[]</span> beanNames <span style="color:#f92672">=</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">detectHandlerMethodsInAncestorContexts</span> <span style="color:#f92672">?</span>
+            BeanFactoryUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">beanNamesForTypeIncludingAncestors</span><span style="color:#f92672">(</span>getApplicationContext<span style="color:#f92672">(),</span> Object<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">)</span>             <span style="color:#f92672">:</span>getApplicationContext<span style="color:#f92672">().</span><span style="color:#a6e22e">getBeanNamesForType</span><span style="color:#f92672">(</span>Object<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">));</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>String beanName <span style="color:#f92672">:</span> beanNames<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>beanName<span style="color:#f92672">.</span><span style="color:#a6e22e">startsWith</span><span style="color:#f92672">(</span>SCOPED_TARGET_NAME_PREFIX<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            Class<span style="color:#f92672">&lt;?&gt;</span> beanType <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+            beanType <span style="color:#f92672">=</span> getApplicationContext<span style="color:#f92672">().</span><span style="color:#a6e22e">getType</span><span style="color:#f92672">(</span>beanName<span style="color:#f92672">);</span>
+             <span style="color:#75715e">//isHandler方法的原理:
+</span><span style="color:#75715e"></span>             <span style="color:#75715e">//判断类上有没有@Controller注解或者是@RequestMapping注解
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>beanType <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> isHandler<span style="color:#f92672">(</span>beanType<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+                detectHandlerMethods<span style="color:#f92672">(</span>beanName<span style="color:#f92672">);</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">//空实现
+</span><span style="color:#75715e"></span>    handlerMethodsInitialized<span style="color:#f92672">(</span>getHandlerMethods<span style="color:#f92672">());</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>detectHandlerMethods方法将反射遍历类中所有的public方法，如果方法上含有@RequestMapping注解，那么将方法上的路径与类上的基础路径(如果有)进行合并，之后将映射(匹配关系)注册到MappingRegistry中。</p>
+<p>注意，<strong>类上的@RequestMapping注解只能作为基路径存在，也就是说，如果类里面没有任何的方法级@RequestMapping注解，那么类上的注解是没有意义的</strong>。这一点可以从实验和源码上得到证实。</p>
+<p>下面我们关注一下映射关系是如何保存(注册)的。</p>
+<p>内部类AbstractHandlerMethodMapping.MappingRegistry是映射的载体，类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/MappingRegistry.jpg" alt="MappingRegistry类图"></p>
+<p>其register方法简略版源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">register</span><span style="color:#f92672">(</span>T mapping<span style="color:#f92672">,</span> Object handler<span style="color:#f92672">,</span> Method method<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">//包装bean和方法
+</span><span style="color:#75715e"></span>    HandlerMethod handlerMethod <span style="color:#f92672">=</span> createHandlerMethod<span style="color:#f92672">(</span>handler<span style="color:#f92672">,</span> method<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">mappingLookup</span><span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>mapping<span style="color:#f92672">,</span> handlerMethod<span style="color:#f92672">);</span>
+    List<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> directUrls <span style="color:#f92672">=</span> getDirectUrls<span style="color:#f92672">(</span>mapping<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>String url <span style="color:#f92672">:</span> directUrls<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">urlLookup</span><span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>url<span style="color:#f92672">,</span> mapping<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    String name <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>getNamingStrategy<span style="color:#f92672">()</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        name <span style="color:#f92672">=</span> getNamingStrategy<span style="color:#f92672">().</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">(</span>handlerMethod<span style="color:#f92672">,</span> mapping<span style="color:#f92672">);</span>
+        addMappingName<span style="color:#f92672">(</span>name<span style="color:#f92672">,</span> handlerMethod<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    CorsConfiguration corsConfig <span style="color:#f92672">=</span> initCorsConfiguration<span style="color:#f92672">(</span>handler<span style="color:#f92672">,</span> method<span style="color:#f92672">,</span> mapping<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>corsConfig <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">corsLookup</span><span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>handlerMethod<span style="color:#f92672">,</span> corsConfig<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">registry</span><span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>mapping<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> MappingRegistration<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;(</span>mapping<span style="color:#f92672">,</span> handlerMethod<span style="color:#f92672">,</span> directUrls<span style="color:#f92672">,</span> name<span style="color:#f92672">));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>mapping其实是一个RequestMappingInfo对象，可以将其看做是**@RequestMapping注解各种属性的一个封装**。最终由RequestMappingInfo.createRequestMappingInfo方法创建，源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> RequestMappingInfo <span style="color:#a6e22e">createRequestMappingInfo</span><span style="color:#f92672">(</span>
+        RequestMapping requestMapping<span style="color:#f92672">,</span> RequestCondition<span style="color:#f92672">&lt;?&gt;</span> customCondition<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> RequestMappingInfo
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">paths</span><span style="color:#f92672">(</span>resolveEmbeddedValuesInPatterns<span style="color:#f92672">(</span>requestMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">path</span><span style="color:#f92672">()))</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">methods</span><span style="color:#f92672">(</span>requestMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">method</span><span style="color:#f92672">())</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">params</span><span style="color:#f92672">(</span>requestMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">params</span><span style="color:#f92672">())</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">headers</span><span style="color:#f92672">(</span>requestMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">headers</span><span style="color:#f92672">())</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">consumes</span><span style="color:#f92672">(</span>requestMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">consumes</span><span style="color:#f92672">())</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">produces</span><span style="color:#f92672">(</span>requestMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">produces</span><span style="color:#f92672">())</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">mappingName</span><span style="color:#f92672">(</span>requestMapping<span style="color:#f92672">.</span><span style="color:#a6e22e">name</span><span style="color:#f92672">())</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">customCondition</span><span style="color:#f92672">(</span>customCondition<span style="color:#f92672">)</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">options</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">config</span><span style="color:#f92672">)</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">build</span><span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>这就很明显了，具体每种属性什么意义可以参考@RequestMapping源码。</p>
+<p>register方法中urlLookup其实就是将paths属性中的每个path都与处理器做映射。</p>
+<p>getNamingStrategy方法得到的是一个HandlerMethodMappingNamingStrategy接口的实例，此接口用以根据HandlerMethod得到一个名字，类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/HandlerMethodMappingNamingStrategy.jpg" alt="HandlerMethodMappingNamingStrategy类图"></p>
+<p>比如对于我们的控制器,SimpleController.echo方法，最终得到的名字将是SC#echo。</p>
+<h4 id="跨域请求">跨域请求</h4>
+<p>spring-mvc自4.2开启加入了跨域请求Cors的支持，主要有两种配置方式:</p>
+<ul>
+<li>
+<p>xml:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;mvc:cors&gt;</span>
+  <span style="color:#f92672">&lt;mvc:mapping</span> <span style="color:#a6e22e">path=</span><span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;/mvc:cors&gt;</span>
+</code></pre></div></li>
+<li>
+<p>@CrossOrigin注解。</p>
+</li>
+</ul>
+<p>Cors的原理可以参考:</p>
+<p><a href="http://www.cnblogs.com/dojo-lzz/p/4265637.html">探讨跨域请求资源的几种方式</a></p>
+<p>而initCorsConfiguration方法的作用便是将@CrossOrigin注解的各种属性封装在CorsConfiguration中。</p>
+<h4 id="拦截器初始化">拦截器初始化</h4>
+<p>AbstractHandlerMapping.initApplicationContext:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">initApplicationContext</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> BeansException <span style="color:#f92672">{</span>
+    detectMappedInterceptors<span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">adaptedInterceptors</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>作用就是从容器中获取所有MappedInterceptor bean并放到adaptedInterceptors中，前面提到过了，我们使用mvc:interceptor定义的拦截器其实就是MappedInterceptor对象。类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/MappedInterceptor.jpg" alt="MappedInterceptor类图"></p>
+<h2 id="handleradapter初始化">HandlerAdapter初始化</h2>
+<p>同样，我们以RequestMappingHandlerAdapter为例进行说明，类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/RequestMappingHandlerAdapter.jpg" alt="RequestMappingHandlerAdapter类图"></p>
+<p>显然，入口在afterPropertiesSet方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">afterPropertiesSet</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// Do this first, it may add ResponseBody advice beans
+</span><span style="color:#75715e"></span>    initControllerAdviceCache<span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">argumentResolvers</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        List<span style="color:#f92672">&lt;</span>HandlerMethodArgumentResolver<span style="color:#f92672">&gt;</span> resolvers <span style="color:#f92672">=</span> getDefaultArgumentResolvers<span style="color:#f92672">();</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">argumentResolvers</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HandlerMethodArgumentResolverComposite<span style="color:#f92672">()</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">addResolvers</span><span style="color:#f92672">(</span>resolvers<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">initBinderArgumentResolvers</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        List<span style="color:#f92672">&lt;</span>HandlerMethodArgumentResolver<span style="color:#f92672">&gt;</span> resolvers <span style="color:#f92672">=</span> getDefaultInitBinderArgumentResolvers<span style="color:#f92672">();</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">initBinderArgumentResolvers</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HandlerMethodArgumentResolverComposite<span style="color:#f92672">()</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">addResolvers</span><span style="color:#f92672">(</span>resolvers<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">returnValueHandlers</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        List<span style="color:#f92672">&lt;</span>HandlerMethodReturnValueHandler<span style="color:#f92672">&gt;</span> handlers <span style="color:#f92672">=</span> getDefaultReturnValueHandlers<span style="color:#f92672">();</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">returnValueHandlers</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HandlerMethodReturnValueHandlerComposite<span style="color:#f92672">()</span>
+            <span style="color:#f92672">.</span><span style="color:#a6e22e">addHandlers</span><span style="color:#f92672">(</span>handlers<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="controlleradvice">@ControllerAdvice</h3>
+<p>initControllerAdviceCache方法用以解析并存储标注了@ControllerAdvice的bean，这东西是干什么的参考：</p>
+<p><a href="http://jinnianshilongnian.iteye.com/blog/1866350">Spring3.2新注解@ControllerAdvice</a></p>
+<h3 id="参数解析器">参数解析器</h3>
+<p>HandlerMethodArgumentResolver即参数解析器，负责从request中解析、得到Controller方法所需的参数。afterPropertiesSet方法设置了一组默认的解析器。具体是哪些参考getDefaultArgumentResolvers方法。类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/HandlerMethodArgumentResolver.jpg" alt="HandlerMethodArgumentResolver类图"></p>
+<h3 id="initbinder支持">@InitBinder支持</h3>
+<p>此注解定义的其实是自定义类型转换器。使用方法参考:</p>
+<p><a href="http://blog.csdn.net/songzaiblog/article/details/49757253">springMVC @initBinder 使用</a></p>
+<p>getDefaultInitBinderArgumentResolvers返回了一组默认使用的转换器，不过其实这里的转换器和上面的参数解析器其实是一个类型的，这里留个坑。</p>
+<h3 id="返回结果解析器">返回结果解析器</h3>
+<p>HandlerMethodReturnValueHandler接口用以处理方法调用(Controller方法)的返回值，类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/HandlerMethodReturnValueHandler.jpg" alt="HandlerMethodReturnValueHandler类图"></p>
+<p>getDefaultReturnValueHandlers方法便返回了一坨这东西。</p>
+<h1 id="请求响应">请求响应</h1>
+<p>我们先来看一下入口在哪。众所周知，Servlet标准定义了所有请求先由service方法处理，如果是get或post方法，那么再交由doGet或是doPost方法处理。</p>
+<p>FrameworkServlet覆盖了service方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">service</span><span style="color:#f92672">(</span>HttpServletRequest request<span style="color:#f92672">,</span> HttpServletResponse response<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    HttpMethod httpMethod <span style="color:#f92672">=</span> HttpMethod<span style="color:#f92672">.</span><span style="color:#a6e22e">resolve</span><span style="color:#f92672">(</span>request<span style="color:#f92672">.</span><span style="color:#a6e22e">getMethod</span><span style="color:#f92672">());</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>HttpMethod<span style="color:#f92672">.</span><span style="color:#a6e22e">PATCH</span> <span style="color:#f92672">==</span> httpMethod <span style="color:#f92672">||</span> httpMethod <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        processRequest<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">super</span><span style="color:#f92672">.</span><span style="color:#a6e22e">service</span><span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>Spring要覆盖此方法的目的在于拦截PATCH请求，PATCH请求与PUT类似，不同在于PATCH是局部更新，而后者是全部更新。可以参考:</p>
+<p><a href="https://segmentfault.com/q/1010000005685904">PATCH和PUT方法的区别？</a></p>
+<p>FrameworkServlet同样也覆盖了doGet和doPost方法，两者只是调用processRequest方法。</p>
+<h2 id="请求上下文">请求上下文</h2>
+<p>Spring MVC会在请求分发之前进行上下文的准备工作，含两部分:</p>
+<ol>
+<li>将地区(Locale)和请求属性以ThreadLocal的方法与当前线程进行关联，分别可以通过LocaleContextHolder和RequestContextHolder进行获取。</li>
+<li>将WebApplicationContext、FlashMap等组件放入到Request属性中。</li>
+</ol>
+<h2 id="请求分发">请求分发</h2>
+<p>DispatcherServlet.doDispatch简略版源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">doDispatch</span><span style="color:#f92672">(</span>HttpServletRequest request<span style="color:#f92672">,</span> HttpServletResponse response<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    HandlerExecutionChain mappedHandler <span style="color:#f92672">=</span> getHandler<span style="color:#f92672">(</span>processedRequest<span style="color:#f92672">);</span>
+    HandlerAdapter ha <span style="color:#f92672">=</span> getHandlerAdapter<span style="color:#f92672">(</span>mappedHandler<span style="color:#f92672">.</span><span style="color:#a6e22e">getHandler</span><span style="color:#f92672">());</span>
+    mv <span style="color:#f92672">=</span> ha<span style="color:#f92672">.</span><span style="color:#a6e22e">handle</span><span style="color:#f92672">(</span>processedRequest<span style="color:#f92672">,</span> response<span style="color:#f92672">,</span> mappedHandler<span style="color:#f92672">.</span><span style="color:#a6e22e">getHandler</span><span style="color:#f92672">());</span>
+    applyDefaultViewName<span style="color:#f92672">(</span>processedRequest<span style="color:#f92672">,</span> mv<span style="color:#f92672">);</span>
+    mappedHandler<span style="color:#f92672">.</span><span style="color:#a6e22e">applyPostHandle</span><span style="color:#f92672">(</span>processedRequest<span style="color:#f92672">,</span> response<span style="color:#f92672">,</span> mv<span style="color:#f92672">);</span>
+    processDispatchResult<span style="color:#f92672">(</span>processedRequest<span style="color:#f92672">,</span> response<span style="color:#f92672">,</span> mappedHandler<span style="color:#f92672">,</span> mv<span style="color:#f92672">,</span> dispatchException<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="处理器查找">处理器查找</h3>
+<p>即为请求寻找合适的Controller的过程。DispatcherServlet.getHandler:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> HandlerExecutionChain <span style="color:#a6e22e">getHandler</span><span style="color:#f92672">(</span>HttpServletRequest request<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>HandlerMapping hm <span style="color:#f92672">:</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">handlerMappings</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        HandlerExecutionChain handler <span style="color:#f92672">=</span> hm<span style="color:#f92672">.</span><span style="color:#a6e22e">getHandler</span><span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>handler <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">return</span> handler<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>从这里可以看出，寻找处理器实际上委托给HandlerMapping实现，寻找的过程便是遍历所有的HandlerMapping进行查找，<strong>一旦找到，那么不再继续进行遍历</strong>。也就是说HandlerMapping之间有优先级的概念，而根据AnnotationDrivenBeanDefinitionParser的注释，RequestMappingHandlerMapping其实有最高的优先级。</p>
+<p>AbstractHandlerMapping.getHandler:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> HandlerExecutionChain <span style="color:#a6e22e">getHandler</span><span style="color:#f92672">(</span>HttpServletRequest request<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+    Object handler <span style="color:#f92672">=</span> getHandlerInternal<span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+    HandlerExecutionChain executionChain <span style="color:#f92672">=</span> getHandlerExecutionChain<span style="color:#f92672">(</span>handler<span style="color:#f92672">,</span> request<span style="color:#f92672">);</span>
+    <span style="color:#75715e">//判断请求头中是否有ORIGIN字段
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>CorsUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isCorsRequest</span><span style="color:#f92672">(</span>request<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        CorsConfiguration globalConfig <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">corsConfigSource</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getCorsConfiguration</span><span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+        CorsConfiguration handlerConfig <span style="color:#f92672">=</span> getCorsConfiguration<span style="color:#f92672">(</span>handler<span style="color:#f92672">,</span> request<span style="color:#f92672">);</span>
+        CorsConfiguration config <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>globalConfig <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">?</span> 
+            globalConfig<span style="color:#f92672">.</span><span style="color:#a6e22e">combine</span><span style="color:#f92672">(</span>handlerConfig<span style="color:#f92672">)</span> <span style="color:#f92672">:</span> handlerConfig<span style="color:#f92672">);</span>
+        executionChain <span style="color:#f92672">=</span> getCorsHandlerExecutionChain<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> executionChain<span style="color:#f92672">,</span> config<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> executionChain<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>getHandlerInternal方法便是根据url进行查找的过程，可以参见MVC初始化-HandlerMapping初始化一节。下面重点是执行链的生成。</p>
+<p>getHandlerExecutionChain方法的原理就是从adaptedInterceptors中获得所有可以适配当前请求URL的MappedInterceptor并将其添加到HandlerExecutionChain的拦截器列表中。拦截器的顺序其实就是我们定义/注册的顺序。</p>
+<p>从getCorsHandlerExecutionChain的源码中可以看出，对于跨域请求其实是向调用链插入了一个CorsInterceptor。</p>
+<h3 id="适配器查找">适配器查找</h3>
+<p>DispatcherServlet.getHandlerAdapter:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> HandlerAdapter <span style="color:#a6e22e">getHandlerAdapter</span><span style="color:#f92672">(</span>Object handler<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>HandlerAdapter ha <span style="color:#f92672">:</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">handlerAdapters</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>ha<span style="color:#f92672">.</span><span style="color:#a6e22e">supports</span><span style="color:#f92672">(</span>handler<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">return</span> ha<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>从前面配置解析-注解驱动可以看出，第一个适配器是RequestMappingHandlerAdapter，而其support方法直接返回true，这就导致了使用的适配器总是这一个。</p>
+<h2 id="请求处理">请求处理</h2>
+<p>RequestMappingHandlerAdapter.handleInternal:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> ModelAndView <span style="color:#a6e22e">handleInternal</span><span style="color:#f92672">(</span>HttpServletRequest request<span style="color:#f92672">,</span>
+        HttpServletResponse response<span style="color:#f92672">,</span> HandlerMethod handlerMethod<span style="color:#f92672">){</span>
+    ModelAndView mav<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// Execute invokeHandlerMethod in synchronized block if required.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">synchronizeOnSession</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        HttpSession session <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">getSession</span><span style="color:#f92672">(</span><span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>session <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            Object mutex <span style="color:#f92672">=</span> WebUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getSessionMutex</span><span style="color:#f92672">(</span>session<span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">synchronized</span> <span style="color:#f92672">(</span>mutex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                mav <span style="color:#f92672">=</span> invokeHandlerMethod<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">,</span> handlerMethod<span style="color:#f92672">);</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">// No HttpSession available -&gt; no mutex necessary
+</span><span style="color:#75715e"></span>            mav <span style="color:#f92672">=</span> invokeHandlerMethod<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">,</span> handlerMethod<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// No synchronization on session demanded at all...
+</span><span style="color:#75715e"></span>        mav <span style="color:#f92672">=</span> invokeHandlerMethod<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">,</span> handlerMethod<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>response<span style="color:#f92672">.</span><span style="color:#a6e22e">containsHeader</span><span style="color:#f92672">(</span>HEADER_CACHE_CONTROL<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>getSessionAttributesHandler<span style="color:#f92672">(</span>handlerMethod<span style="color:#f92672">).</span><span style="color:#a6e22e">hasSessionAttributes</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+            applyCacheSeconds<span style="color:#f92672">(</span>response<span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">cacheSecondsForSessionAttributeHandlers</span><span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+            prepareResponse<span style="color:#f92672">(</span>response<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> mav<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="session同步">Session同步</h3>
+<p>可以看出，如果开启了synchronizeOnSession，那么<strong>同一个session的请求将会串行执行</strong>，这一选项默认是关闭的，当然我们可以通过注入的方式进行改变。</p>
+<h3 id="参数解析">参数解析</h3>
+<h4 id="策略模式">策略模式</h4>
+<p>正如前面HandlerAdapter初始化-参数解析器一节提到的，HandlerAdapter内部含有一组解析器负责对各类型的参数进行解析。下面我们就常用的自定义参数和Model为例进行说明。</p>
+<h4 id="自定义参数">自定义参数</h4>
+<p>解析由RequestParamMethodArgumentResolver完成。</p>
+<p>supportsParameter方法决定了一个解析器可以解析的参数类型，该解析器支持@RequestParam标准的参数或是<strong>简单类型</strong>的参数，具体参见其注释。为什么此解析器可以同时解析@RequestParam注解和普通参数呢?玄机在于RequestMappingHandlerAdapter方法在初始化参数解析器时其实初始化了<strong>两个RequestMappingHandlerAdapter对象</strong>，getDefaultArgumentResolvers方法相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> List<span style="color:#f92672">&lt;</span>HandlerMethodArgumentResolver<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">getDefaultArgumentResolvers</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    resolvers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> RequestPartMethodArgumentResolver<span style="color:#f92672">(</span>getMessageConverters<span style="color:#f92672">(),</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">requestResponseBodyAdvice</span><span style="color:#f92672">));</span>
+    <span style="color:#75715e">// Catch-all
+</span><span style="color:#75715e"></span>    resolvers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> RequestParamMethodArgumentResolver<span style="color:#f92672">(</span>getBeanFactory<span style="color:#f92672">(),</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>useDefaultResolution参数用于启动对常规类型参数的解析，这里的常规类型指的又是什么呢?</p>
+<p>实际上由BeanUtils.isSimpleProperty方法决定:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">isSimpleProperty</span><span style="color:#f92672">(</span>Class<span style="color:#f92672">&lt;?&gt;</span> clazz<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Assert<span style="color:#f92672">.</span><span style="color:#a6e22e">notNull</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;Class must not be null&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">return</span> isSimpleValueType<span style="color:#f92672">(</span>clazz<span style="color:#f92672">)</span> <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>clazz<span style="color:#f92672">.</span><span style="color:#a6e22e">isArray</span><span style="color:#f92672">()</span> <span style="color:#f92672">&amp;&amp;</span> isSimpleValueType<span style="color:#f92672">(</span>clazz<span style="color:#f92672">.</span><span style="color:#a6e22e">getComponentType</span><span style="color:#f92672">()));</span>
+<span style="color:#f92672">}</span>
+
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">isSimpleValueType</span><span style="color:#f92672">(</span>Class<span style="color:#f92672">&lt;?&gt;</span> clazz<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isPrimitiveOrWrapper</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">)</span> <span style="color:#f92672">||</span> clazz<span style="color:#f92672">.</span><span style="color:#a6e22e">isEnum</span><span style="color:#f92672">()</span> <span style="color:#f92672">||</span>
+            CharSequence<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">isAssignableFrom</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">)</span> <span style="color:#f92672">||</span>
+            Number<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">isAssignableFrom</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">)</span> <span style="color:#f92672">||</span>
+            Date<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">isAssignableFrom</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">)</span> <span style="color:#f92672">||</span>
+            URI<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span> <span style="color:#f92672">==</span> clazz <span style="color:#f92672">||</span> URL<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span> <span style="color:#f92672">==</span> clazz <span style="color:#f92672">||</span>
+            Locale<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span> <span style="color:#f92672">==</span> clazz <span style="color:#f92672">||</span> Class<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span> <span style="color:#f92672">==</span> clazz<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>忽略复杂的调用关系，最核心的实现位于resolveName方法，部分源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> Object <span style="color:#a6e22e">resolveName</span><span style="color:#f92672">(</span>String name<span style="color:#f92672">,</span> MethodParameter parameter<span style="color:#f92672">,</span> NativeWebRequest request<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>arg <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        String<span style="color:#f92672">[]</span> paramValues <span style="color:#f92672">=</span> request<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterValues</span><span style="color:#f92672">(</span>name<span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>paramValues <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            arg <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>paramValues<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span> <span style="color:#f92672">==</span> 1 <span style="color:#f92672">?</span> paramValues<span style="color:#f92672">[</span>0<span style="color:#f92672">]</span> <span style="color:#f92672">:</span> paramValues<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> arg<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>name就是方法的参数名，可以看出，参数解析<strong>就是根据参数名去request查找对应属性的过程</strong>，在这里参数类型并没有起什么作用。</p>
+<h6 id="参数名是从哪里来的">参数名是从哪里来的</h6>
+<p>方法名获取的入口位于RequestParamMethodArgumentResolver的resolveArgument方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> Object <span style="color:#a6e22e">resolveArgument</span><span style="color:#f92672">(</span>MethodParameter parameter<span style="color:#f92672">,</span> ModelAndViewContainer mavContainer<span style="color:#f92672">,</span>
+    NativeWebRequest webRequest<span style="color:#f92672">,</span> WebDataBinderFactory binderFactory<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+    NamedValueInfo namedValueInfo <span style="color:#f92672">=</span> getNamedValueInfo<span style="color:#f92672">(</span>parameter<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>getNamedValueInfo方法最终完成对MethodParameter的getParameterName方法的调用:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getParameterName</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    ParameterNameDiscoverer discoverer <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">parameterNameDiscoverer</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>discoverer <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        String<span style="color:#f92672">[]</span> parameterNames <span style="color:#f92672">=</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">method</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">?</span>
+                discoverer<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterNames</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">method</span><span style="color:#f92672">)</span> <span style="color:#f92672">:</span> discoverer<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterNames</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">constructor</span><span style="color:#f92672">));</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>parameterNames <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">parameterName</span> <span style="color:#f92672">=</span> parameterNames<span style="color:#f92672">[</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">parameterIndex</span><span style="color:#f92672">];</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">parameterNameDiscoverer</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">parameterName</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>显然，参数名的获取由接口ParameterNameDiscoverer完成:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/ParameterNameDiscoverer.jpg" alt="ParameterNameDiscoverer"></p>
+<p>默认采用DefaultParameterNameDiscoverer，但此类其实相当于StandardReflectionParameterNameDiscoverer和LocalVariableTableParameterNameDiscoverer的组合，且前者先于后者进行解析。</p>
+<p>StandardReflectionParameterNameDiscoverer.getParameterNames:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> String<span style="color:#f92672">[]</span> <span style="color:#a6e22e">getParameterNames</span><span style="color:#f92672">(</span>Method method<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Parameter<span style="color:#f92672">[]</span> parameters <span style="color:#f92672">=</span> method<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameters</span><span style="color:#f92672">();</span>
+    String<span style="color:#f92672">[]</span> parameterNames <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> String<span style="color:#f92672">[</span>parameters<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">];</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> i <span style="color:#f92672">&lt;</span> parameters<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span> i<span style="color:#f92672">++)</span> <span style="color:#f92672">{</span>
+        Parameter param <span style="color:#f92672">=</span> parameters<span style="color:#f92672">[</span>i<span style="color:#f92672">];</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>param<span style="color:#f92672">.</span><span style="color:#a6e22e">isNamePresent</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+        parameterNames<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> param<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> parameterNames<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>此类被注解UsesJava8标注，其原理就是利用的jdk8的-parameters编译参数，只有在加上此选项的情况下才能用反射的方法获得真实的参数名，所以一般情况下StandardReflectionParameterNameDiscoverer是无法成功获取参数名的。</p>
+<p>LocalVariableTableParameterNameDiscoverer利用了ASM直接访问class文件中的本地变量表来得到变量名，下面是使用<code>javap -verbose</code>命令得到的本地变量表示例:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/local_variable_tables.PNG" alt="本地变量表"></p>
+<p>但是默认情况下javac compiler是不生成本地变量表这种调试信息的，需要加<code>-g</code>参数才可以，那为什么在我们的测试Controller中却可以获得呢，玄机就在于idea的下列设置:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/idea_debug_info.PNG" alt="idea编译设置"></p>
+<p>取消这项设置的勾选再次运行程序便出问题了:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/debug_info_error.PNG" alt="调试信息错误"></p>
+<h4 id="model">Model</h4>
+<p>解析由ModelMethodProcessor完成。</p>
+<p>supportsParameter方法很简单:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">supportsParameter</span><span style="color:#f92672">(</span>MethodParameter parameter<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> Model<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">isAssignableFrom</span><span style="color:#f92672">(</span>parameter<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterType</span><span style="color:#f92672">());</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>很直白了。</p>
+<p>resolveArgument：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">resolveArgument</span><span style="color:#f92672">(</span>MethodParameter parameter<span style="color:#f92672">,</span> ModelAndViewContainer mavContainer<span style="color:#f92672">,</span>
+    NativeWebRequest webRequest<span style="color:#f92672">,</span> WebDataBinderFactory binderFactory<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">getModel</span><span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>忽略各种调用关系，<strong>Model其实是一个BindingAwareModelMap对象，且每次请求(需要注入Model的前提下)都有一个新的该对象生成</strong>。类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/BindingAwareModelMap.jpg" alt="BindingAwareModelMap类图"></p>
+<h4 id="总结">总结</h4>
+<ul>
+<li>我们可以通过实现HandlerMethodArgumentResolver接口并将其注册容器的方式实现自定义参数类型的解析。</li>
+<li>为了防止出现参数名获取不到的问题，应优先使用@RequestParam注解直接声明需要的参数名称。</li>
+</ul>
+<h3 id="返回值解析">返回值解析</h3>
+<p>套路和上面是一样的，通常情况，我们返回的其实是view名，负责处理的是ViewNameMethodReturnValueHandler，</p>
+<p>supportsReturnType方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">supportsReturnType</span><span style="color:#f92672">(</span>MethodParameter returnType<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Class<span style="color:#f92672">&lt;?&gt;</span> paramType <span style="color:#f92672">=</span> returnType<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterType</span><span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">void</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span> <span style="color:#f92672">==</span> paramType <span style="color:#f92672">||</span> CharSequence<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">isAssignableFrom</span><span style="color:#f92672">(</span>paramType<span style="color:#f92672">));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>handleReturnValue:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">handleReturnValue</span><span style="color:#f92672">(</span>Object returnValue<span style="color:#f92672">,</span> MethodParameter returnType<span style="color:#f92672">,</span>
+        ModelAndViewContainer mavContainer<span style="color:#f92672">,</span> NativeWebRequest webRequest<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>returnValue <span style="color:#66d9ef">instanceof</span> CharSequence<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        String viewName <span style="color:#f92672">=</span> returnValue<span style="color:#f92672">.</span><span style="color:#a6e22e">toString</span><span style="color:#f92672">();</span>
+        mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">setViewName</span><span style="color:#f92672">(</span>viewName<span style="color:#f92672">);</span>
+         <span style="color:#75715e">// 判断的依据: 是否以redirect:开头
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>isRedirectViewName<span style="color:#f92672">(</span>viewName<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">setRedirectModelScenario</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可见这里并没有进行实际的处理，只是解析得到了最终的视图名称。</p>
+<h3 id="视图渲染">视图渲染</h3>
+<p>由DispatcherServlet的processDispatchResult方法完成，源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">processDispatchResult</span><span style="color:#f92672">(</span>HttpServletRequest request<span style="color:#f92672">,</span> HttpServletResponse response<span style="color:#f92672">,</span>
+        HandlerExecutionChain mappedHandler<span style="color:#f92672">,</span> ModelAndView mv<span style="color:#f92672">,</span> Exception exception<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">boolean</span> errorView <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>exception <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+         <span style="color:#75715e">//一般不会到这个分支
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>exception <span style="color:#66d9ef">instanceof</span> ModelAndViewDefiningException<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            mv <span style="color:#f92672">=</span> <span style="color:#f92672">((</span>ModelAndViewDefiningException<span style="color:#f92672">)</span> exception<span style="color:#f92672">).</span><span style="color:#a6e22e">getModelAndView</span><span style="color:#f92672">();</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+            Object handler <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>mappedHandler <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">?</span> mappedHandler<span style="color:#f92672">.</span><span style="color:#a6e22e">getHandler</span><span style="color:#f92672">()</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+            mv <span style="color:#f92672">=</span> processHandlerException<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">,</span> handler<span style="color:#f92672">,</span> exception<span style="color:#f92672">);</span>
+            errorView <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>mv <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">// Did the handler return a view to render?
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>mv <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>mv<span style="color:#f92672">.</span><span style="color:#a6e22e">wasCleared</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        render<span style="color:#f92672">(</span>mv<span style="color:#f92672">,</span> request<span style="color:#f92672">,</span> response<span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>errorView<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            WebUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">clearErrorRequestAttributes</span><span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看出，处理<strong>根据是否抛出异常分为了两种情况</strong>。</p>
+<p>如果抛出了异常，那么processHandlerException方法将会遍历所有的HandlerExceptionResolver实例，默认有哪些参考MVC初始化-HandlerExceptionResolver检查一节。默认的处理器用于改变响应状态码、调用标注了@ExceptionHandler的bean进行处理，如果没有@ExceptionHandler的bean或是不能处理此类异常，那么就会导致ModelAndView始终为null，最终Spring MVC将异常向上抛给Tomcat，然后Tomcat就会把堆栈打印出来。</p>
+<p>如果我们想将其定向到指定的错误页面，可以这样配置:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;org.springframework.web.servlet.handler.SimpleMappingExceptionResolver&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;defaultErrorView&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;error&#34;</span><span style="color:#f92672">&gt;&lt;/property&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+</code></pre></div><p>此处理器会返回一个非空的ModelAndView。</p>
+<h4 id="modelandview">ModelAndView</h4>
+<p>回过头来看一下这到底是个什么东西。类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/ModelAndView.jpg" alt="ModelAndView类图"></p>
+<p>很直白。</p>
+<p>怎么生成的。RequestMappingHandlerAdapter.getModelAndView相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">ModelMap model <span style="color:#f92672">=</span> mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">getModel</span><span style="color:#f92672">();</span>
+ModelAndView mav <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ModelAndView<span style="color:#f92672">(</span>mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">getViewName</span><span style="color:#f92672">(),</span> model<span style="color:#f92672">,</span> mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">getStatus</span><span style="color:#f92672">());</span>
+</code></pre></div><h4 id="渲染">渲染</h4>
+<p>DispatcherServlet.render简略版源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">render</span><span style="color:#f92672">(</span>ModelAndView mv<span style="color:#f92672">,</span> HttpServletRequest request<span style="color:#f92672">,</span> HttpServletResponse response<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Locale locale <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">localeResolver</span><span style="color:#f92672">.</span><span style="color:#a6e22e">resolveLocale</span><span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+    response<span style="color:#f92672">.</span><span style="color:#a6e22e">setLocale</span><span style="color:#f92672">(</span>locale<span style="color:#f92672">);</span>
+    View view<span style="color:#f92672">;</span>
+    <span style="color:#75715e">//判断依据: 是否是String类型
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>mv<span style="color:#f92672">.</span><span style="color:#a6e22e">isReference</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// We need to resolve the view name.
+</span><span style="color:#75715e"></span>        view <span style="color:#f92672">=</span> resolveViewName<span style="color:#f92672">(</span>mv<span style="color:#f92672">.</span><span style="color:#a6e22e">getViewName</span><span style="color:#f92672">(),</span> mv<span style="color:#f92672">.</span><span style="color:#a6e22e">getModelInternal</span><span style="color:#f92672">(),</span> locale<span style="color:#f92672">,</span> request<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// No need to lookup: the ModelAndView object contains the actual View object.
+</span><span style="color:#75715e"></span>        view <span style="color:#f92672">=</span> mv<span style="color:#f92672">.</span><span style="color:#a6e22e">getView</span><span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>mv<span style="color:#f92672">.</span><span style="color:#a6e22e">getStatus</span><span style="color:#f92672">()</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        response<span style="color:#f92672">.</span><span style="color:#a6e22e">setStatus</span><span style="color:#f92672">(</span>mv<span style="color:#f92672">.</span><span style="color:#a6e22e">getStatus</span><span style="color:#f92672">().</span><span style="color:#a6e22e">value</span><span style="color:#f92672">());</span>
+    <span style="color:#f92672">}</span>
+    view<span style="color:#f92672">.</span><span style="color:#a6e22e">render</span><span style="color:#f92672">(</span>mv<span style="color:#f92672">.</span><span style="color:#a6e22e">getModelInternal</span><span style="color:#f92672">(),</span> request<span style="color:#f92672">,</span> response<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>resolveViewName方法将会遍历所有的ViewResolver bean，只要有一个解析的结果(View)不为空，即停止遍历。根据MVC初始化-ViewResolver检查一节和我们的配置文件可知，容器中有两个ViewResolver ，分别是: InternalResourceViewResolver和UrlBasedViewResolver。</p>
+<h5 id="viewresolver">ViewResolver</h5>
+<p>类图(忽略实现类):</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/ViewResolver.jpg" alt="ViewResolver类图"></p>
+<p>resolveViewName方法的源码不再贴出，其实只做了一件事: 用反射创建并初始化我们指定的View，根据我们的配置，就是JstlView。</p>
+<h5 id="view">View</h5>
+<p>类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/JstlView.jpg" alt="JstlView类图"></p>
+<p>渲染的核心逻辑位于InternalResourceView.renderMergedOutputModel，简略版源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">renderMergedOutputModel</span><span style="color:#f92672">(</span>
+        Map<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Object<span style="color:#f92672">&gt;</span> model<span style="color:#f92672">,</span> HttpServletRequest request<span style="color:#f92672">,</span> HttpServletResponse response<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// 将Model中的属性设置的request中
+</span><span style="color:#75715e"></span>    exposeModelAsRequestAttributes<span style="color:#f92672">(</span>model<span style="color:#f92672">,</span> request<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// 获取资源(jsp)路径
+</span><span style="color:#75715e"></span>    String dispatcherPath <span style="color:#f92672">=</span> prepareForRendering<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// Obtain a RequestDispatcher for the target resource (typically a JSP).
+</span><span style="color:#75715e"></span>    RequestDispatcher rd <span style="color:#f92672">=</span> getRequestDispatcher<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> dispatcherPath<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// If already included or response already committed, perform include, else forward.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>useInclude<span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        response<span style="color:#f92672">.</span><span style="color:#a6e22e">setContentType</span><span style="color:#f92672">(</span>getContentType<span style="color:#f92672">());</span>
+        rd<span style="color:#f92672">.</span><span style="color:#a6e22e">include</span><span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// Note: The forwarded resource is supposed to determine the content type itself.
+</span><span style="color:#75715e"></span>        rd<span style="color:#f92672">.</span><span style="color:#a6e22e">forward</span><span style="color:#f92672">(</span>request<span style="color:#f92672">,</span> response<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看出，对jsp来说，所谓的渲染其实就是<strong>将Model中的属性设置到Request，再利用原生Servlet RequestDispatcher API进行转发的过程</strong>。</p>
+<h1 id="拾遗">拾遗</h1>
+<h2 id="responsebody">@ResponseBody</h2>
+<p>通常我们可以在Controller或方法上标注@ResponseBody注解以表示需要将对象转为JSON并返回给前端，那么Spring MVC是如何自动完成这一过程的呢?</p>
+<p>从前面初始化-容器初始化-容器创建-配置解析一节可以看出，Spring MVC采用org.springframework.web.servlet.config.AnnotationDrivenBeanDefinitionParser进行配置的解析，核心的parse方法中完成了对HttpMessageConverter的初始化。</p>
+<h3 id="httpmessageconverter">HttpMessageConverter</h3>
+<p>Spring的HttpMessageConverter接口负责HTTP请求-Java对象与Java对象-响应之间的转换。我们以Spring默认使用的Jackson转换器为例，类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/HttpMessageConverter.jpg" alt="HttpMessageConverter"></p>
+<p>HttpMessageConverter实现的初始化由AnnotationDrivenBeanDefinitionParser的getMessageConverters方法完成，HttpMessageConverter的来源分为自定义和默认。</p>
+<p>示例配置:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;mvc:annotation-driven&gt;</span>
+  <span style="color:#f92672">&lt;mvc:message-converters</span> <span style="color:#a6e22e">register-defaults=</span><span style="color:#e6db74">&#34;true&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;test.Converter&#34;</span> <span style="color:#f92672">/&gt;</span>
+  <span style="color:#f92672">&lt;/mvc:message-converters&gt;</span>
+<span style="color:#f92672">&lt;/mvc:annotation-driven&gt;</span>
+</code></pre></div><h4 id="自定义">自定义</h4>
+<p>Spring允许我们通过XML配置文件的message-converters元素来进行自定义。</p>
+<h4 id="默认">默认</h4>
+<p>当<strong>检测到没有配置message-converters元素或者register-defaults=&ldquo;true&quot;时Spring便会注册默认转换器</strong>。这其中便包括MappingJacksonHttpMessageConverter，相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>jacksonPresent<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    messageConverters<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>createConverterDefinition<span style="color:#f92672">(</span>
+        org<span style="color:#f92672">.</span><span style="color:#a6e22e">springframework</span><span style="color:#f92672">.</span><span style="color:#a6e22e">http</span><span style="color:#f92672">.</span><span style="color:#a6e22e">converter</span><span style="color:#f92672">.</span><span style="color:#a6e22e">json</span><span style="color:#f92672">.</span><span style="color:#a6e22e">MappingJacksonHttpMessageConverter</span><span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">,</span> source<span style="color:#f92672">));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>jacksonPresent声明:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">boolean</span> jacksonPresent <span style="color:#f92672">=</span>
+    ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isPresent</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;org.codehaus.jackson.map.ObjectMapper&#34;</span><span style="color:#f92672">,</span> AnnotationDrivenBeanDefinitionParser<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getClassLoader</span><span style="color:#f92672">())</span> <span style="color:#f92672">&amp;&amp;</span>
+    ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isPresent</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;org.codehaus.jackson.JsonGenerator&#34;</span><span style="color:#f92672">,</span> AnnotationDrivenBeanDefinitionParser<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getClassLoader</span><span style="color:#f92672">());</span>
+</code></pre></div><h3 id="转换">转换</h3>
+<p>入口位于ServletInvocableHandlerMethod的invokeAndHandle方法对于响应的处理:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">returnValueHandlers</span><span style="color:#f92672">.</span><span style="color:#a6e22e">handleReturnValue</span><span style="color:#f92672">(</span>returnValue<span style="color:#f92672">,</span> getReturnValueType<span style="color:#f92672">(</span>returnValue<span style="color:#f92672">),</span> mavContainer<span style="color:#f92672">,</span> webRequest<span style="color:#f92672">);</span>
+</code></pre></div><p>returnValueHandlers其实就是RequestMappingHandlerAdapter内部的returnValueHandlers，后者由RequestMappingHandlerAdapter的afterPropertiesSet方法初始化，关键在于:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">handlers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> RequestResponseBodyMethodProcessor<span style="color:#f92672">(</span>getMessageConverters<span style="color:#f92672">(),</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">contentNegotiationManager</span><span style="color:#f92672">));</span>
+</code></pre></div><p>对象到JSON的转换正是由RequestResponseBodyMethodProcessor完成，ServletInvocableHandlerMethod通过supportsReturnType方法决定HandlerMethodReturnValueHandler是否可以处理当前返回类型或返回方法，RequestResponseBodyMethodProcessor的实现:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">supportsReturnType</span><span style="color:#f92672">(</span>MethodParameter returnType<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">((</span>AnnotationUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">findAnnotation</span><span style="color:#f92672">(</span>returnType<span style="color:#f92672">.</span><span style="color:#a6e22e">getContainingClass</span><span style="color:#f92672">(),</span> ResponseBody<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">||</span>
+        <span style="color:#f92672">(</span>returnType<span style="color:#f92672">.</span><span style="color:#a6e22e">getMethodAnnotation</span><span style="color:#f92672">(</span>ResponseBody<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>核心的handleReturnValue方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">handleReturnValue</span><span style="color:#f92672">(</span>Object returnValue<span style="color:#f92672">,</span> MethodParameter returnType<span style="color:#f92672">,</span>
+    ModelAndViewContainer mavContainer<span style="color:#f92672">,</span> NativeWebRequest webRequest<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">setRequestHandled</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>returnValue <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        writeWithMessageConverters<span style="color:#f92672">(</span>returnValue<span style="color:#f92672">,</span> returnType<span style="color:#f92672">,</span> webRequest<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>这里其实是通过HttpMessageConverter的canRead或canWrite方法来判断给定的转换器是否合适，canWrite方法实现:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">canWrite</span><span style="color:#f92672">(</span>Class<span style="color:#f92672">&lt;?&gt;</span> clazz<span style="color:#f92672">,</span> MediaType mediaType<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">objectMapper</span><span style="color:#f92672">.</span><span style="color:#a6e22e">canSerialize</span><span style="color:#f92672">(</span>clazz<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;&amp;</span> canWrite<span style="color:#f92672">(</span>mediaType<span style="color:#f92672">));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>这里剩下的便是Jackson的事情了，注意MappingJacksonHttpMessageConverter中的objectMapper被所有的线程所共享，因为其是线程安全的，但是这样是否有性能问题?</p>
+<h2 id="参数解析--结果转换">参数解析 &amp; 结果转换</h2>
+<p>Spring MVC中参数到各种类型的转换由HandlerMethodArgumentResolver接口完成，而Controller返回值到真正的响应的转换由HandlerMethodReturnValueHandler接口完成。两者分别负责Spring MVC中数据的输入与输出，可用下图表示:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/mvc_input_output.PNG" alt="Spring MVC输入输出转换"></p>
+<p>HandlerMethodArgumentResolver接口及其主要实现类如下图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/HandlerMethodArgumentResolver_all.jpg" alt="HandlerMethodArgumentResolver"></p>
+<p>HandlerMethodReturnValueHandler接口以及主要实现类如下:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/HandlerMethodReturnValueHandler_all.jpg" alt="HandlerMethodReturnValueHandler"></p>
+<p>其实有很多类同时实现了两个接口，比如RequestResponseBodyMethodProcessor，这样的类一般以Processor结尾。</p>
+<p>两种转换器的初始化由HandlerAdapter完成，这也很好的体现了HandlerAdapter接口的功能。以喜闻乐见的RequestMappingHandlerAdapter为例，其初始化的HandlerMethodReturnValueHandler列表如下:</p>
+<ul>
+<li>ModelAndViewMethodReturnValueHandler</li>
+<li>ModelMethodProcessor</li>
+<li>HttpEntityMethodProcessor</li>
+<li>HttpHeadersReturnValueHandler</li>
+<li>CallableMethodReturnValueHandler</li>
+<li>DeferredResultMethodReturnValueHandler</li>
+<li>AsyncTaskMethodReturnValueHandler</li>
+<li>ListenableFutureReturnValueHandler</li>
+<li>ModelAttributeMethodProcessor</li>
+<li>RequestResponseBodyMethodProcessor</li>
+<li>ViewNameMethodReturnValueHandler</li>
+<li>MapMethodProcessor</li>
+<li>ModelAndViewResolverMethodReturnValueHandler</li>
+</ul>
+<p>从中也可以推测出我们可以把哪些类型的值(对象)直接&quot;丢给&quot;Spring。</p>
+<p>对于HandlerMethodArgumentResolver和HandlerMethodReturnValueHandler来说，HttpMessageConverter像是两者手中用来实现功能的武器。</p>
+<h2 id="纯对象参数接收">&ldquo;纯&quot;对象参数接收</h2>
+<p>假设有如下这样的Controller:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@RequestMapping</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/echoAgain&#34;</span><span style="color:#f92672">)</span>
+<span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">echo</span><span style="color:#f92672">(</span>SimpleModel simpleModel<span style="color:#f92672">,</span> Model model<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    model<span style="color:#f92672">.</span><span style="color:#a6e22e">addAttribute</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;echo&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;hello &#34;</span> <span style="color:#f92672">+</span> simpleModel<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;, your age is &#34;</span> <span style="color:#f92672">+</span> simpleModel<span style="color:#f92672">.</span><span style="color:#a6e22e">getAge</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;.&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;echo&#34;</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>经过测试可以发现，SimpleModel参数既可以接收get请求，也可以接收post请求。那么在这种情况下请求参数是被哪个参数解析器解析的呢，debug发现: ServletModelAttributeMethodProcessor：</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/ServletModelAttributeMethodProcessor.jpg" alt="ServletModelAttributeMethodProcessor"></p>
+<p>核心的supportsParameter方法由父类ModelAttributeMethodProcessor实现:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">supportsParameter</span><span style="color:#f92672">(</span>MethodParameter parameter<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>parameter<span style="color:#f92672">.</span><span style="color:#a6e22e">hasParameterAnnotation</span><span style="color:#f92672">(</span>ModelAttribute<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">)</span> <span style="color:#f92672">||</span>
+        <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">annotationNotRequired</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>BeanUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isSimpleProperty</span><span style="color:#f92672">(</span>parameter<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterType</span><span style="color:#f92672">())));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看出，这里支持带有ModelAttribute注解或者是非基本类型的参数解析，同时annotationNotRequired必须设为false，即ModelAttribute注解不必存在，这里是在ServletModelAttributeMethodProcessor的构造器中进行控制的，
+RequestMappingHandlerAdapter.getDefaultArgumentResolvers部分源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">resolvers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> ServletModelAttributeMethodProcessor<span style="color:#f92672">(</span><span style="color:#66d9ef">false</span><span style="color:#f92672">));</span>
+</code></pre></div><p>此类的作用是对@ModelAttribute注解标注的参数进行解析，假设我们将Controller方法改写成:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@RequestMapping</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/echoAgain&#34;</span><span style="color:#f92672">)</span>
+<span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">echo</span><span style="color:#f92672">(</span><span style="color:#a6e22e">@ModelAttribute</span> SimpleModel simpleModel<span style="color:#f92672">,</span> Model model<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    model<span style="color:#f92672">.</span><span style="color:#a6e22e">addAttribute</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;echo&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;hello &#34;</span> <span style="color:#f92672">+</span> simpleModel<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;, your age is &#34;</span> <span style="color:#f92672">+</span> simpleModel<span style="color:#f92672">.</span><span style="color:#a6e22e">getAge</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;.&#34;</span><span style="color:#f92672">);</span>
+    System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span>model<span style="color:#f92672">.</span><span style="color:#a6e22e">asMap</span><span style="color:#f92672">().</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;simpleModel&#34;</span><span style="color:#f92672">));</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;echo&#34;</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>首先，Spring会首先反射生成一个SimpleModel对象，之后将从request中获取的参数尝试设置到SimpleModel对象中去，最后将此对象放置到Model中(本质上就是一个Map)，key就是simpleModel.下面我们来看一下具体的解析过程，整个过程可以分为
+以下三部分:</p>
+<h3 id="参数对象构造">参数对象构造</h3>
+<p>因为SimpleModel是一个对象类型，所以要想将参数注入到其中，第一步必然是先创建一个对象，创建的入口位于ModelAttributeMethodProcessor的resolveArgument方法，相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#75715e">//name在这里便是simpleModel
+</span><span style="color:#75715e"></span>String name <span style="color:#f92672">=</span> ModelFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getNameForParameter</span><span style="color:#f92672">(</span>parameter<span style="color:#f92672">);</span>
+Object attribute <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">containsAttribute</span><span style="color:#f92672">(</span>name<span style="color:#f92672">)</span> <span style="color:#f92672">?</span> mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">getModel</span><span style="color:#f92672">().</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span>name<span style="color:#f92672">)</span> <span style="color:#f92672">:</span>
+                    createAttribute<span style="color:#f92672">(</span>name<span style="color:#f92672">,</span> parameter<span style="color:#f92672">,</span> binderFactory<span style="color:#f92672">,</span> webRequest<span style="color:#f92672">));</span><span style="color:#75715e">//反射实例化
+</span></code></pre></div><p>ModelAndViewContainer是个什么东西呢，从名字就可以看出就，它是Spring MVC里两个重要概念Model和View的组合体，用来记录在请求响应过程中Model和View的变化，在这里可以简单理解为去Model中检查有没有叫simpleModel的属性已经存在。</p>
+<h3 id="参数绑定">参数绑定</h3>
+<p>这里使用到了DataBinder接口，按照注释的说明，此接口用以<strong>向执行的对象中设置属性值</strong>，就是这么简单，其继承体系如下图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/DataBinder.jpg" alt="DataBinder"></p>
+<p>WebDataBinderFactory接口用以创建WebDataBinder对象，其继承体系如下图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/WebDataBinderFactory.jpg" alt="WebDataBinderFactory"></p>
+<p>默认使用的是ServletRequestDataBinderFactory，创建了一个ExtendedServletRequestDataBinder对象:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> ServletRequestDataBinder <span style="color:#a6e22e">createBinderInstance</span><span style="color:#f92672">(</span>Object target<span style="color:#f92672">,</span> String objectName<span style="color:#f92672">,</span> NativeWebRequest request<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> ExtendedServletRequestDataBinder<span style="color:#f92672">(</span>target<span style="color:#f92672">,</span> objectName<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>参数绑定的入口位于ModelAttributeMethodProcessor.resolveArgument方法，相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>mavContainer<span style="color:#f92672">.</span><span style="color:#a6e22e">isBindingDisabled</span><span style="color:#f92672">(</span>name<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+    bindRequestParameters<span style="color:#f92672">(</span>binder<span style="color:#f92672">,</span> webRequest<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>接下来由ServletRequestDataBinder的bind方法完成，核心源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">bind</span><span style="color:#f92672">(</span>ServletRequest request<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    MutablePropertyValues mpvs <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ServletRequestParameterPropertyValues<span style="color:#f92672">(</span>request<span style="color:#f92672">);</span>
+    doBind<span style="color:#f92672">(</span>mpvs<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>在ServletRequestParameterPropertyValues构造器中获取了Request中所有的属性对。doBind方法便是调用前面初始化的目标对象的setter方法进行参数设置的过程，不再展开。</p>
+<h3 id="参数校验">参数校验</h3>
+<p>将我们的Controller方法改写为下面这种形式便可以启动Spring MVC的参数校验:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@RequestMapping</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/echoAgain&#34;</span><span style="color:#f92672">)</span>
+<span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">echo</span><span style="color:#f92672">(</span><span style="color:#a6e22e">@Validated</span> SimpleModel simpleModel<span style="color:#f92672">,</span> Model model<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    model<span style="color:#f92672">.</span><span style="color:#a6e22e">addAttribute</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;echo&#34;</span><span style="color:#f92672">,</span> <span style="color:#e6db74">&#34;hello &#34;</span> <span style="color:#f92672">+</span> simpleModel<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;, your age is &#34;</span> <span style="color:#f92672">+</span> simpleModel<span style="color:#f92672">.</span><span style="color:#a6e22e">getAge</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;.&#34;</span><span style="color:#f92672">);</span>
+    System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span>model<span style="color:#f92672">.</span><span style="color:#a6e22e">asMap</span><span style="color:#f92672">().</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;simpleModel&#34;</span><span style="color:#f92672">));</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;echo&#34;</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>在这里@Validated注解可以用@Valid(javax)替换，前者是Spring对java校验标准的扩充，增加了校验组的支持。
+为什么参数校验要放到参数绑定后面进行说明呢，因为**@Validated和@valid注解不会影响Spring MVC参数解析的行为，被这两个注解标注的对象仍是由参数绑定一节提到的解析器进行解析。**</p>
+<p>当参数校验绑定之后，Spring MVC会尝试对参数进行校验，如果我们设置了校验注解。ModelAttributeMethodProcessor.resolveArgument方法相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">validateIfApplicable<span style="color:#f92672">(</span>binder<span style="color:#f92672">,</span> parameter<span style="color:#f92672">);</span>
+
+<span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">validateIfApplicable</span><span style="color:#f92672">(</span>WebDataBinder binder<span style="color:#f92672">,</span> MethodParameter methodParam<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Annotation<span style="color:#f92672">[]</span> annotations <span style="color:#f92672">=</span> methodParam<span style="color:#f92672">.</span><span style="color:#a6e22e">getParameterAnnotations</span><span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>Annotation ann <span style="color:#f92672">:</span> annotations<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        Validated validatedAnn <span style="color:#f92672">=</span> AnnotationUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getAnnotation</span><span style="color:#f92672">(</span>ann<span style="color:#f92672">,</span> Validated<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>validatedAnn <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">||</span> ann<span style="color:#f92672">.</span><span style="color:#a6e22e">annotationType</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getSimpleName</span><span style="color:#f92672">().</span><span style="color:#a6e22e">startsWith</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Valid&#34;</span><span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            Object hints <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>validatedAnn <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">?</span> validatedAnn<span style="color:#f92672">.</span><span style="color:#a6e22e">value</span><span style="color:#f92672">()</span> <span style="color:#f92672">:</span> AnnotationUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getValue</span><span style="color:#f92672">(</span>ann<span style="color:#f92672">));</span>
+            Object<span style="color:#f92672">[]</span> validationHints <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>hints <span style="color:#66d9ef">instanceof</span> Object<span style="color:#f92672">[]</span> <span style="color:#f92672">?</span> <span style="color:#f92672">(</span>Object<span style="color:#f92672">[])</span> hints <span style="color:#f92672">:</span> <span style="color:#66d9ef">new</span> Object<span style="color:#f92672">[]</span> <span style="color:#f92672">{</span>hints<span style="color:#f92672">});</span>
+            binder<span style="color:#f92672">.</span><span style="color:#a6e22e">validate</span><span style="color:#f92672">(</span>validationHints<span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>DataBinder.validate:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">validate</span><span style="color:#f92672">(</span>Object<span style="color:#f92672">...</span> validationHints<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>Validator validator <span style="color:#f92672">:</span> getValidators<span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>ObjectUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isEmpty</span><span style="color:#f92672">(</span>validationHints<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;&amp;</span> validator <span style="color:#66d9ef">instanceof</span> SmartValidator<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#f92672">((</span>SmartValidator<span style="color:#f92672">)</span> validator<span style="color:#f92672">).</span><span style="color:#a6e22e">validate</span><span style="color:#f92672">(</span>getTarget<span style="color:#f92672">(),</span> getBindingResult<span style="color:#f92672">(),</span> validationHints<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>validator <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            validator<span style="color:#f92672">.</span><span style="color:#a6e22e">validate</span><span style="color:#f92672">(</span>getTarget<span style="color:#f92672">(),</span> getBindingResult<span style="color:#f92672">());</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可见，具体的校验交给了<code>org.springframework.validation.Validator</code>实现，类图:</p>
+<p><img src="/images/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/Validator.png" alt="Validator"></p>
+<p>getValidators方法获取的实际上是DataBinder内部的validators字段:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">final</span> List<span style="color:#f92672">&lt;</span>Validator<span style="color:#f92672">&gt;</span> validators <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;</span>Validator<span style="color:#f92672">&gt;();</span>
+</code></pre></div><p>根据这里的校验器的来源可以分为以下两种情况。</p>
+<h4 id="jsr校验">JSR校验</h4>
+<p>需要引入hibernate-validator到classpath中，回顾最前面配置解析部分，配置:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;mvc:annotation-driven/&gt;</span>
+</code></pre></div><p>会利用AnnotationDrivenBeanDefinitionParser进行相关的解析、初始化工作，正是在其parse方法完成了对JSR校验的支持。相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> BeanDefinition <span style="color:#a6e22e">parse</span><span style="color:#f92672">(</span>Element element<span style="color:#f92672">,</span> ParserContext parserContext<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    RuntimeBeanReference validator <span style="color:#f92672">=</span> getValidator<span style="color:#f92672">(</span>element<span style="color:#f92672">,</span> source<span style="color:#f92672">,</span> parserContext<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+
+<span style="color:#66d9ef">private</span> RuntimeBeanReference <span style="color:#a6e22e">getValidator</span><span style="color:#f92672">(</span>Element element<span style="color:#f92672">,</span> Object source<span style="color:#f92672">,</span> ParserContext parserContext<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">//mvc:annotation-driven配置支持validator属性
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>element<span style="color:#f92672">.</span><span style="color:#a6e22e">hasAttribute</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;validator&#34;</span><span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> RuntimeBeanReference<span style="color:#f92672">(</span>element<span style="color:#f92672">.</span><span style="color:#a6e22e">getAttribute</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;validator&#34;</span><span style="color:#f92672">));</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>javaxValidationPresent<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        RootBeanDefinition validatorDef <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RootBeanDefinition<span style="color:#f92672">(</span>
+                <span style="color:#e6db74">&#34;org.springframework.validation.beanvalidation.OptionalValidatorFactoryBean&#34;</span><span style="color:#f92672">);</span>
+        validatorDef<span style="color:#f92672">.</span><span style="color:#a6e22e">setSource</span><span style="color:#f92672">(</span>source<span style="color:#f92672">);</span>
+        validatorDef<span style="color:#f92672">.</span><span style="color:#a6e22e">setRole</span><span style="color:#f92672">(</span>BeanDefinition<span style="color:#f92672">.</span><span style="color:#a6e22e">ROLE_INFRASTRUCTURE</span><span style="color:#f92672">);</span>
+        String validatorName <span style="color:#f92672">=</span> parserContext<span style="color:#f92672">.</span><span style="color:#a6e22e">getReaderContext</span><span style="color:#f92672">().</span><span style="color:#a6e22e">registerWithGeneratedName</span><span style="color:#f92672">(</span>validatorDef<span style="color:#f92672">);</span>
+        parserContext<span style="color:#f92672">.</span><span style="color:#a6e22e">registerComponent</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> BeanComponentDefinition<span style="color:#f92672">(</span>validatorDef<span style="color:#f92672">,</span> validatorName<span style="color:#f92672">));</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> RuntimeBeanReference<span style="color:#f92672">(</span>validatorName<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>javaxValidationPresent的定义:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">boolean</span> javaxValidationPresent <span style="color:#f92672">=</span>
+    ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isPresent</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;javax.validation.Validator&#34;</span><span style="color:#f92672">,</span> AnnotationDrivenBeanDefinitionParser<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getClassLoader</span><span style="color:#f92672">());</span>
+</code></pre></div><p>实现了InitializingBean接口，所以afterPropertiesSet方法是其初始化的入口，具体的校验过程不再展开。
+除此之外还有一个有意思的问题，就是上面提到的校验器是如何进入到DataBinder中去的呢?答案是WebDataBinderFactory创建DataBinder对象时会利用WebBindingInitializer对DataBinder进行初始化，正是在这里
+将容器中存在的校验器设置到DataBinder中，至于WebBindingInitializer又是从哪里来的，不再探究了，否则这细节实在是太麻烦了，意义不大。</p>
+<h4 id="自定义校验器">自定义校验器</h4>
+<p>我们可以实现Spring提供的Validator接口，然后在Controller里边这样设置我们要是用的校验器:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@InitBinder</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">initBinder</span><span style="color:#f92672">(</span>DataBinder dataBinder<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    dataBinder<span style="color:#f92672">.</span><span style="color:#a6e22e">setValidator</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> SimpleModelValidator<span style="color:#f92672">());</span>
+    <span style="color:#75715e">//如果有多个可以使用addValidators方法
+</span><span style="color:#75715e"></span><span style="color:#f92672">}</span>
+</code></pre></div><p>我们的Controller方法依然可以如此定义:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@RequestMapping</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/echoAgain&#34;</span><span style="color:#f92672">)</span>
+<span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">echo</span><span style="color:#f92672">(</span><span style="color:#a6e22e">@Validated</span> SimpleModel simpleModel<span style="color:#f92672">,</span> Model model<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;echo&#34;</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>如果有错误，会直接返回400.</p>
+<h4 id="一个有意思的问题">一个有意思的问题</h4>
+<p>如果我们把Controller方法这样定义会怎样?</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@RequestMapping</span><span style="color:#f92672">(</span>value <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;/echoAgain&#34;</span><span style="color:#f92672">,</span> method <span style="color:#f92672">=</span> RequestMethod<span style="color:#f92672">.</span><span style="color:#a6e22e">POST</span><span style="color:#f92672">)</span>
+<span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">echo</span><span style="color:#f92672">(</span><span style="color:#a6e22e">@Validated</span> <span style="color:#a6e22e">@RequestBody</span> SimpleModel simpleModel<span style="color:#f92672">,</span> Model model<span style="color:#f92672">)</span> <span style="color:#f92672">{}</span>
+</code></pre></div><p>答案是@RequestBody注解先于@Validated注解起作用，这样既可以利用@RequestBody注解向Controller传递json串，同时又能够达到校验的目的。从源码的角度来说，这在很大程度上是一个顺序的问题:
+RequestMappingHandlerAdapter.getDefaultArgumentResolvers相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java">resolvers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> ServletModelAttributeMethodProcessor<span style="color:#f92672">(</span><span style="color:#66d9ef">false</span><span style="color:#f92672">));</span>
+resolvers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> RequestResponseBodyMethodProcessor<span style="color:#f92672">(</span>getMessageConverters<span style="color:#f92672">(),</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">requestResponseBodyAdvice</span><span style="color:#f92672">));</span>
+</code></pre></div><p>虽然ServletModelAttributeMethodProcessor位于RequestResponseBodyMethodProcessor之前，但构造器参数为false说明了此解析器必须要求参数被@ModelAttribute注解标注，其实在最后还有一个不需要注解的解析器被添加:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#75715e">// Catch-all
+</span><span style="color:#75715e"></span>resolvers<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> ServletModelAttributeMethodProcessor<span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">));</span>
+</code></pre></div><p>至此，真相大白。</p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="4b11c018282cf5e98ff66d2d435ef9cc" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+    <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Older
+      </strong>
+      <div class="article-nav-title">Spring Transaction源码分析</div>
+    </a>
+    
+
+    
+    <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Spring Task源码分析</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Spring Mvc源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Task源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-26 14:40:31 &#43;0000 UTC" itemprop="datePublished">2018-06-26</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="Spring Mvc源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Mvc源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-25 15:03:57 &#43;0000 UTC" itemprop="datePublished">2018-06-25</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Spring Mvc源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Transaction源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-15 14:57:50 &#43;0000 UTC" itemprop="datePublished">2018-06-15</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Spring Mvc源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Context源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 23:19:43 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Spring Mvc源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Aop源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 12:08:31 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java">
+                    java
+                </a>
+                <span class="category-list-count">3</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">9</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">
+                    容器
+                </a>
+                <span class="category-list-count">3</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+        
+        <a href="https://dijun.cf/tags/spring" style="font-size: 12px;">spring</a>
+        
+        
+        <a href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8" style="font-size: 12px;">容器</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

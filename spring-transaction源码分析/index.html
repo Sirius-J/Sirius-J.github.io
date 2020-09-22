@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Spring Transaction源码分析 &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Spring Transaction源码分析" />
+<meta property="og:description" content="配置
+以最简单的jdbc事务为例:
+&lt;!-- 数据源以Sping自带为例，每次请求均返回一个新的连接 --&gt;
+&lt;bean id=&#34;dataSource&#34; class=&#34;org.springframework.jdbc.datasource.DriverManagerDataSource&#34;&gt;
+    &lt;property name=&#34;driverClassName&#34; value=&#34;${jdbc.driverClassName}&#34; /&gt;
+    &lt;property name=&#34;url&#34; value=&#34;${jdbc.url}&#34; /&gt;
+    &lt;property name=&#34;username&#34; value=&#34;${jdbc.username}&#34; /&gt;
+    &lt;property name=&#34;password&#34; value=&#34;${jdbc.password}&#34; /&gt;
+&lt;/bean&gt;
+&lt;bean id=&#34;transactionManager&#34; class=&#34;org.springframework.jdbc.datasource.DataSourceTransactionManager&#34;&gt;
+    &lt;property name=&#34;dataSource&#34; ref=&#34;dataSource&#34;/&gt;
+&lt;/bean&gt;
+&lt;tx:annotation-driven transaction-manager=&#34;transactionManager&#34;/&gt;
+" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" />
+<meta property="article:published_time" content="2018-06-15T14:57:50+00:00" />
+<meta property="article:modified_time" content="2018-06-15T14:57:50+00:00" />
+
+    
+    <meta itemprop="name" content="Spring Transaction源码分析">
+<meta itemprop="description" content="配置
+以最简单的jdbc事务为例:
+&lt;!-- 数据源以Sping自带为例，每次请求均返回一个新的连接 --&gt;
+&lt;bean id=&#34;dataSource&#34; class=&#34;org.springframework.jdbc.datasource.DriverManagerDataSource&#34;&gt;
+    &lt;property name=&#34;driverClassName&#34; value=&#34;${jdbc.driverClassName}&#34; /&gt;
+    &lt;property name=&#34;url&#34; value=&#34;${jdbc.url}&#34; /&gt;
+    &lt;property name=&#34;username&#34; value=&#34;${jdbc.username}&#34; /&gt;
+    &lt;property name=&#34;password&#34; value=&#34;${jdbc.password}&#34; /&gt;
+&lt;/bean&gt;
+&lt;bean id=&#34;transactionManager&#34; class=&#34;org.springframework.jdbc.datasource.DataSourceTransactionManager&#34;&gt;
+    &lt;property name=&#34;dataSource&#34; ref=&#34;dataSource&#34;/&gt;
+&lt;/bean&gt;
+&lt;tx:annotation-driven transaction-manager=&#34;transactionManager&#34;/&gt;
+">
+<meta itemprop="datePublished" content="2018-06-15T14:57:50+00:00" />
+<meta itemprop="dateModified" content="2018-06-15T14:57:50+00:00" />
+<meta itemprop="wordCount" content="1538">
+
+
+
+<meta itemprop="keywords" content="spring," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Spring Transaction源码分析"/>
+<meta name="twitter:description" content="配置
+以最简单的jdbc事务为例:
+&lt;!-- 数据源以Sping自带为例，每次请求均返回一个新的连接 --&gt;
+&lt;bean id=&#34;dataSource&#34; class=&#34;org.springframework.jdbc.datasource.DriverManagerDataSource&#34;&gt;
+    &lt;property name=&#34;driverClassName&#34; value=&#34;${jdbc.driverClassName}&#34; /&gt;
+    &lt;property name=&#34;url&#34; value=&#34;${jdbc.url}&#34; /&gt;
+    &lt;property name=&#34;username&#34; value=&#34;${jdbc.username}&#34; /&gt;
+    &lt;property name=&#34;password&#34; value=&#34;${jdbc.password}&#34; /&gt;
+&lt;/bean&gt;
+&lt;bean id=&#34;transactionManager&#34; class=&#34;org.springframework.jdbc.datasource.DataSourceTransactionManager&#34;&gt;
+    &lt;property name=&#34;dataSource&#34; ref=&#34;dataSource&#34;/&gt;
+&lt;/bean&gt;
+&lt;tx:annotation-driven transaction-manager=&#34;transactionManager&#34;/&gt;
+"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+          <a class="main-nav-link" href="/about/">About</a>
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+          <td><a class="main-nav-link" href="/about/">About</a></td>
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        16
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          5
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner4.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+    <h1 class="article-title" itemprop="name">
+        Spring Transaction源码分析
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-06-15 14:57:50 &#43;0000 UTC" itemprop="datePublished">2018-06-15</time>
+            &middot;
+            1538
+            words
+            &middot;
+            8
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/spring">spring</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/spring">spring</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="配置">配置</h1>
+<p>以最简单的jdbc事务为例:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#75715e">&lt;!-- 数据源以Sping自带为例，每次请求均返回一个新的连接 --&gt;</span>
+<span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">id=</span><span style="color:#e6db74">&#34;dataSource&#34;</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;org.springframework.jdbc.datasource.DriverManagerDataSource&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;driverClassName&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.driverClassName}&#34;</span> <span style="color:#f92672">/&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;url&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.url}&#34;</span> <span style="color:#f92672">/&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;username&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.username}&#34;</span> <span style="color:#f92672">/&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;password&#34;</span> <span style="color:#a6e22e">value=</span><span style="color:#e6db74">&#34;${jdbc.password}&#34;</span> <span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+<span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">id=</span><span style="color:#e6db74">&#34;transactionManager&#34;</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;org.springframework.jdbc.datasource.DataSourceTransactionManager&#34;</span><span style="color:#f92672">&gt;</span>
+    <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;dataSource&#34;</span> <span style="color:#a6e22e">ref=</span><span style="color:#e6db74">&#34;dataSource&#34;</span><span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+<span style="color:#f92672">&lt;tx:annotation-driven</span> <span style="color:#a6e22e">transaction-manager=</span><span style="color:#e6db74">&#34;transactionManager&#34;</span><span style="color:#f92672">/&gt;</span>
+</code></pre></div><h1 id="解析">解析</h1>
+<p>TxNamespaceHandler.init:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">init</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;advice&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> TxAdviceBeanDefinitionParser<span style="color:#f92672">());</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;annotation-driven&#34;</span><span style="color:#f92672">,</span> 
+        <span style="color:#66d9ef">new</span> AnnotationDrivenBeanDefinitionParser<span style="color:#f92672">());</span>
+    registerBeanDefinitionParser<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;jta-transaction-manager&#34;</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> JtaTransactionManagerBeanDefinitionParser<span style="color:#f92672">());</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>明显解析的入口便在AnnotationDrivenBeanDefinitionParser.parse:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> BeanDefinition <span style="color:#a6e22e">parse</span><span style="color:#f92672">(</span>Element element<span style="color:#f92672">,</span> ParserContext parserContext<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    registerTransactionalEventListenerFactory<span style="color:#f92672">(</span>parserContext<span style="color:#f92672">);</span>
+    String mode <span style="color:#f92672">=</span> element<span style="color:#f92672">.</span><span style="color:#a6e22e">getAttribute</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;mode&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#e6db74">&#34;aspectj&#34;</span><span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>mode<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// mode=&#34;aspectj&#34;
+</span><span style="color:#75715e"></span>        registerTransactionAspect<span style="color:#f92672">(</span>element<span style="color:#f92672">,</span> parserContext<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// mode=&#34;proxy&#34;
+</span><span style="color:#75715e"></span>        AopAutoProxyConfigurer<span style="color:#f92672">.</span><span style="color:#a6e22e">configureAutoProxyCreator</span><span style="color:#f92672">(</span>element<span style="color:#f92672">,</span> parserContext<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>下面分部分进行说明。</p>
+<h2 id="transactionaleventlistener">TransactionalEventListener</h2>
+<p>第一部分用于向Spring容器注册TransactionalEventListener工厂，TransactionalEventListener是Spring4.2引入的新特性，允许我们自定义监听器监听事务的提交或其它动作。</p>
+<h2 id="主要组件注册">主要组件注册</h2>
+<p>即configureAutoProxyCreator方法，此方法的最终作用便是在Spring容器中加入这样的bean结构:</p>
+<p>BeanFactoryTransactionAttributeSourceAdvisor-&gt;TransactionInterceptor-&gt;AnnotationTransactionAttributeSource</p>
+<p>其中AnnotationTransactionAttributeSource用于解析@Transactional注解的相关属性。</p>
+<h2 id="代理类生成">代理类生成</h2>
+<p>与aop模块类似，入口位于configureAutoProxyCreator里注册的bean: InfrastructureAdvisorAutoProxyCreator，其类图:</p>
+<p><img src="/images/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/InfrastructureAdvisorAutoProxyCreator.jpg" alt="InfrastructureAdvisorAutoProxyCreator类图"></p>
+<p>此类的特殊之处从其名字上可以体现: <strong>只考虑Spring内部使用的基础设施Advisor</strong>。</p>
+<p>为类创建代理的入口位于AbstractAutoProxyCreator.postProcessAfterInitialization:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">postProcessAfterInitialization</span><span style="color:#f92672">(</span>Object bean<span style="color:#f92672">,</span> String beanName<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> BeansException <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>bean <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        Object cacheKey <span style="color:#f92672">=</span> getCacheKey<span style="color:#f92672">(</span>bean<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">(),</span> beanName<span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">earlyProxyReferences</span><span style="color:#f92672">.</span><span style="color:#a6e22e">contains</span><span style="color:#f92672">(</span>cacheKey<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">return</span> wrapIfNecessary<span style="color:#f92672">(</span>bean<span style="color:#f92672">,</span> beanName<span style="color:#f92672">,</span> cacheKey<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> bean<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>wrapIfNecessary核心逻辑:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> Object <span style="color:#a6e22e">wrapIfNecessary</span><span style="color:#f92672">(</span>Object bean<span style="color:#f92672">,</span> String beanName<span style="color:#f92672">,</span> Object cacheKey<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// Create proxy if we have advice.
+</span><span style="color:#75715e"></span>    Object<span style="color:#f92672">[]</span> specificInterceptors <span style="color:#f92672">=</span> getAdvicesAndAdvisorsForBean<span style="color:#f92672">(</span>bean<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">(),</span> beanName<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>specificInterceptors <span style="color:#f92672">!=</span> DO_NOT_PROXY<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">advisedBeans</span><span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>cacheKey<span style="color:#f92672">,</span> Boolean<span style="color:#f92672">.</span><span style="color:#a6e22e">TRUE</span><span style="color:#f92672">);</span>
+        Object proxy <span style="color:#f92672">=</span> createProxy<span style="color:#f92672">(</span>
+            bean<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">(),</span> beanName<span style="color:#f92672">,</span> specificInterceptors<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> SingletonTargetSource<span style="color:#f92672">(</span>bean<span style="color:#f92672">));</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">proxyTypes</span><span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>cacheKey<span style="color:#f92672">,</span> proxy<span style="color:#f92672">.</span><span style="color:#a6e22e">getClass</span><span style="color:#f92672">());</span>
+        <span style="color:#66d9ef">return</span> proxy<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="advisor寻找">Advisor寻找</h3>
+<p>getAdvicesAndAdvisorsForBean用于去容器中寻找适合当前bean的Advisor，其最终调用AbstractAdvisorAutoProxyCreator.findEligibleAdvisors:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> List<span style="color:#f92672">&lt;</span>Advisor<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">findEligibleAdvisors</span><span style="color:#f92672">(</span>Class<span style="color:#f92672">&lt;?&gt;</span> beanClass<span style="color:#f92672">,</span> String beanName<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    List<span style="color:#f92672">&lt;</span>Advisor<span style="color:#f92672">&gt;</span> candidateAdvisors <span style="color:#f92672">=</span> findCandidateAdvisors<span style="color:#f92672">();</span>
+    List<span style="color:#f92672">&lt;</span>Advisor<span style="color:#f92672">&gt;</span> eligibleAdvisors <span style="color:#f92672">=</span> findAdvisorsThatCanApply<span style="color:#f92672">(</span>candidateAdvisors<span style="color:#f92672">,</span> beanClass<span style="color:#f92672">,</span> beanName<span style="color:#f92672">);</span>
+    extendAdvisors<span style="color:#f92672">(</span>eligibleAdvisors<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>eligibleAdvisors<span style="color:#f92672">.</span><span style="color:#a6e22e">isEmpty</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//按照@Ordered排序
+</span><span style="color:#75715e"></span>        eligibleAdvisors <span style="color:#f92672">=</span> sortAdvisors<span style="color:#f92672">(</span>eligibleAdvisors<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> eligibleAdvisors<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>这个方法在spring-aop中已经详细说明过了，这里再强调一下具体的查找逻辑:</p>
+<ul>
+<li>首先去容器找出所有实现了Advisor接口的bean，对应findCandidateAdvisors方法.</li>
+<li>逐一判断Advisor是否适用于当前bean，对应findAdvisorsThatCanApply方法，判断逻辑为:
+<ul>
+<li>如果Advisor是IntroductionAdvisor，那么判断其ClassFilter是否可以匹配bean的类.</li>
+<li>如果Advisor是PointcutAdvisor，那么首先进行ClassFilter匹配，如果匹配失败，那么再获得Advisor的MethodMatcher对象，如果MethodMatcher可以匹配任意方法，那么返回true，否则反射获取给定bean的所有方法逐一进行匹配，只要有一个匹配成功，即返回true.</li>
+<li>其它情况，直接返回true.</li>
+</ul>
+</li>
+</ul>
+<p>对于spring事务来说，我们有唯一的Advisor: BeanFactoryTransactionAttributeSourceAdvisor,其类图:</p>
+<p><img src="/images/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/BeanFactoryTransactionAttributeSourceAdvisor.jpg" alt="BeanFactoryTransactionAttributeSourceAdvisor类图"></p>
+<p>可以看出，BeanFactoryTransactionAttributeSourceAdvisor其实是一个PointcutAdvisor，所以<strong>是否可以匹配取决于其Pointcut</strong>。此Advisor的pointcut是一个TransactionAttributeSourcePointcut对象，类图:</p>
+<p><img src="/images/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/TransactionAttributeSourcePointcut.jpg" alt="TransactionAttributeSourcePointcut类图"></p>
+<p><strong>Pointcut的核心在于其ClassFilter和MethodMatcher</strong>。</p>
+<p>ClassFilter:</p>
+<p>位于StaticMethodMatcherPointcut:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> ClassFilter classFilter <span style="color:#f92672">=</span> ClassFilter<span style="color:#f92672">.</span><span style="color:#a6e22e">TRUE</span><span style="color:#f92672">;</span>
+</code></pre></div><p>即: 类检查全部通过。</p>
+<p>MethodMatcher:</p>
+<p>TransactionAttributeSourcePointcut.matches:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">matches</span><span style="color:#f92672">(</span>Method method<span style="color:#f92672">,</span> Class<span style="color:#f92672">&lt;?&gt;</span> targetClass<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">//如果已经是事务代理，那么不应该再次代理
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>TransactionalProxy<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">isAssignableFrom</span><span style="color:#f92672">(</span>targetClass<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    TransactionAttributeSource tas <span style="color:#f92672">=</span> getTransactionAttributeSource<span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>tas <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">||</span> tas<span style="color:#f92672">.</span><span style="color:#a6e22e">getTransactionAttribute</span><span style="color:#f92672">(</span>method<span style="color:#f92672">,</span> targetClass<span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>getTransactionAttribute方法使用了缓存的思想，但其核心逻辑位于AbstractFallbackTransactionAttributeSource.computeTransactionAttribute:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> TransactionAttribute <span style="color:#a6e22e">computeTransactionAttribute</span><span style="color:#f92672">(</span>Method method<span style="color:#f92672">,</span> Class<span style="color:#f92672">&lt;?&gt;</span> targetClass<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// Don&#39;t allow no-public methods as required.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>allowPublicMethodsOnly<span style="color:#f92672">()</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">!</span>Modifier<span style="color:#f92672">.</span><span style="color:#a6e22e">isPublic</span><span style="color:#f92672">(</span>method<span style="color:#f92672">.</span><span style="color:#a6e22e">getModifiers</span><span style="color:#f92672">()))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">// Ignore CGLIB subclasses - introspect the actual user class.
+</span><span style="color:#75715e"></span>    Class<span style="color:#f92672">&lt;?&gt;</span> userClass <span style="color:#f92672">=</span> ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getUserClass</span><span style="color:#f92672">(</span>targetClass<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// The method may be on an interface, but we need attributes from the target class.
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// If the target class is null, the method will be unchanged.
+</span><span style="color:#75715e"></span>    Method specificMethod <span style="color:#f92672">=</span> ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getMostSpecificMethod</span><span style="color:#f92672">(</span>method<span style="color:#f92672">,</span> userClass<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// If we are dealing with method with generic parameters, find the original method.
+</span><span style="color:#75715e"></span>    specificMethod <span style="color:#f92672">=</span> BridgeMethodResolver<span style="color:#f92672">.</span><span style="color:#a6e22e">findBridgedMethod</span><span style="color:#f92672">(</span>specificMethod<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// First try is the method in the target class.
+</span><span style="color:#75715e"></span>    TransactionAttribute txAtt <span style="color:#f92672">=</span> findTransactionAttribute<span style="color:#f92672">(</span>specificMethod<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAtt <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> txAtt<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">// Second try is the transaction attribute on the target class.
+</span><span style="color:#75715e"></span>    txAtt <span style="color:#f92672">=</span> findTransactionAttribute<span style="color:#f92672">(</span>specificMethod<span style="color:#f92672">.</span><span style="color:#a6e22e">getDeclaringClass</span><span style="color:#f92672">());</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAtt <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isUserLevelMethod</span><span style="color:#f92672">(</span>method<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> txAtt<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>specificMethod <span style="color:#f92672">!=</span> method<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// Fallback is to look at the original method.
+</span><span style="color:#75715e"></span>        txAtt <span style="color:#f92672">=</span> findTransactionAttribute<span style="color:#f92672">(</span>method<span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAtt <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">return</span> txAtt<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#75715e">// Last fallback is the class of the original method.
+</span><span style="color:#75715e"></span>        txAtt <span style="color:#f92672">=</span> findTransactionAttribute<span style="color:#f92672">(</span>method<span style="color:#f92672">.</span><span style="color:#a6e22e">getDeclaringClass</span><span style="color:#f92672">());</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAtt <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> ClassUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">isUserLevelMethod</span><span style="color:#f92672">(</span>method<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">return</span> txAtt<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>很明显可以看出，<strong>首先去方法上查找是否有相应的事务注解(比如@Transactional)，如果没有，那么再去类上查找</strong>。</p>
+<h1 id="运行">运行</h1>
+<p>以JDK动态代理为例，JdkDynamicAopProxy.invoke简略版源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span>Object proxy<span style="color:#f92672">,</span> Method method<span style="color:#f92672">,</span> Object<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Throwable <span style="color:#f92672">{</span>
+    List<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">&gt;</span> chain <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">advised</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getInterceptorsAndDynamicInterceptionAdvice</span><span style="color:#f92672">(</span>method<span style="color:#f92672">,</span> targetClass<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>chain<span style="color:#f92672">.</span><span style="color:#a6e22e">isEmpty</span><span style="color:#f92672">())</span> <span style="color:#f92672">{.</span>
+        <span style="color:#75715e">//没有可用的拦截器，直接调用原方法
+</span><span style="color:#75715e"></span>        Object<span style="color:#f92672">[]</span> argsToUse <span style="color:#f92672">=</span> AopProxyUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">adaptArgumentsIfNecessary</span><span style="color:#f92672">(</span>method<span style="color:#f92672">,</span> args<span style="color:#f92672">);</span>
+        retVal <span style="color:#f92672">=</span> AopUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">invokeJoinpointUsingReflection</span><span style="color:#f92672">(</span>target<span style="color:#f92672">,</span> method<span style="color:#f92672">,</span> argsToUse<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// We need to create a method invocation...
+</span><span style="color:#75715e"></span>        invocation <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ReflectiveMethodInvocation<span style="color:#f92672">(</span>proxy<span style="color:#f92672">,</span> target<span style="color:#f92672">,</span> method<span style="color:#f92672">,</span> args<span style="color:#f92672">,</span> targetClass<span style="color:#f92672">,</span> chain<span style="color:#f92672">);</span>
+        <span style="color:#75715e">// Proceed to the joinpoint through the interceptor chain.
+</span><span style="color:#75715e"></span>        Object retVal <span style="color:#f92672">=</span> invocation<span style="color:#f92672">.</span><span style="color:#a6e22e">proceed</span><span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h2 id="调用链生成">调用链生成</h2>
+<p>即getInterceptorsAndDynamicInterceptionAdvice方法，其原理是:</p>
+<p><strong>遍历所有使用的 Advisor，获得其Advice，将Advice转为MethodInterceptor</strong>。那么是如何转的呢?</p>
+<p>根据Spring的定义，Advice可以是一个MethodInterceptor，也可以是类似于Aspectj的before, after通知。转换由DefaultAdvisorAdapterRegistry.getInterceptors完成:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> MethodInterceptor<span style="color:#f92672">[]</span> <span style="color:#a6e22e">getInterceptors</span><span style="color:#f92672">(</span>Advisor advisor<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> UnknownAdviceTypeException <span style="color:#f92672">{</span>
+    List<span style="color:#f92672">&lt;</span>MethodInterceptor<span style="color:#f92672">&gt;</span> interceptors <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;</span>MethodInterceptor<span style="color:#f92672">&gt;(</span>3<span style="color:#f92672">);</span>
+    Advice advice <span style="color:#f92672">=</span> advisor<span style="color:#f92672">.</span><span style="color:#a6e22e">getAdvice</span><span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>advice <span style="color:#66d9ef">instanceof</span> MethodInterceptor<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        interceptors<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">((</span>MethodInterceptor<span style="color:#f92672">)</span> advice<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>AdvisorAdapter adapter <span style="color:#f92672">:</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">adapters</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>adapter<span style="color:#f92672">.</span><span style="color:#a6e22e">supportsAdvice</span><span style="color:#f92672">(</span>advice<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            interceptors<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>adapter<span style="color:#f92672">.</span><span style="color:#a6e22e">getInterceptor</span><span style="color:#f92672">(</span>advisor<span style="color:#f92672">));</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>interceptors<span style="color:#f92672">.</span><span style="color:#a6e22e">isEmpty</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> UnknownAdviceTypeException<span style="color:#f92672">(</span>advisor<span style="color:#f92672">.</span><span style="color:#a6e22e">getAdvice</span><span style="color:#f92672">());</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> interceptors<span style="color:#f92672">.</span><span style="color:#a6e22e">toArray</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> MethodInterceptor<span style="color:#f92672">[</span>interceptors<span style="color:#f92672">.</span><span style="color:#a6e22e">size</span><span style="color:#f92672">()]);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>AdvisorAdapter接口用以支持用户自定义的Advice类型，并将自定义的类型转为拦截器。默认adapters含有MethodBeforeAdviceAdapter、AfterReturningAdviceAdapter和ThrowsAdviceAdapter三种类型，用以分别支持MethodBeforeAdvice、AfterReturningAdvice和ThrowsAdvice。</p>
+<p><strong>对于我们的BeanFactoryTransactionAttributeSourceAdvisor来说，有且只有一个拦截器: TransactionInterceptor</strong>.</p>
+<h2 id="调用链调用">调用链调用</h2>
+<p>ReflectiveMethodInvocation.proceed:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">proceed</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> Throwable <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">currentInterceptorIndex</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">interceptorsAndDynamicMethodMatchers</span><span style="color:#f92672">.</span><span style="color:#a6e22e">size</span><span style="color:#f92672">()</span> <span style="color:#f92672">-</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//拦截器执行完毕，调用原本的方法
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">return</span> invokeJoinpoint<span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    Object interceptorOrInterceptionAdvice <span style="color:#f92672">=</span>
+            <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">interceptorsAndDynamicMethodMatchers</span><span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(++</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">currentInterceptorIndex</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>interceptorOrInterceptionAdvice <span style="color:#66d9ef">instanceof</span> InterceptorAndDynamicMethodMatcher<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        InterceptorAndDynamicMethodMatcher dm <span style="color:#f92672">=</span>
+                <span style="color:#f92672">(</span>InterceptorAndDynamicMethodMatcher<span style="color:#f92672">)</span> interceptorOrInterceptionAdvice<span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>dm<span style="color:#f92672">.</span><span style="color:#a6e22e">methodMatcher</span><span style="color:#f92672">.</span><span style="color:#a6e22e">matches</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">method</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">targetClass</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">arguments</span><span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">return</span> dm<span style="color:#f92672">.</span><span style="color:#a6e22e">interceptor</span><span style="color:#f92672">.</span><span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">// Dynamic matching failed.
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span> proceed<span style="color:#f92672">();</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//调用拦截器的invoke方法
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">return</span> <span style="color:#f92672">((</span>MethodInterceptor<span style="color:#f92672">)</span> interceptorOrInterceptionAdvice<span style="color:#f92672">).</span><span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看出，这其实是一个<strong>逐个调用拦截器的invoke方法，最终调用原本方法(被代理方法)的过程</strong>。所以，事务添加的核心逻辑(入口)在TransactionInterceptor的invoke方法。</p>
+<h2 id="transactioninterceptor">TransactionInterceptor</h2>
+<p>invoke方法:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">invoke</span><span style="color:#f92672">(</span><span style="color:#66d9ef">final</span> MethodInvocation invocation<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Throwable <span style="color:#f92672">{</span>
+    Class<span style="color:#f92672">&lt;?&gt;</span> targetClass <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>invocation<span style="color:#f92672">.</span><span style="color:#a6e22e">getThis</span><span style="color:#f92672">()</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">?</span> 
+             AopUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">getTargetClass</span><span style="color:#f92672">(</span>invocation<span style="color:#f92672">.</span><span style="color:#a6e22e">getThis</span><span style="color:#f92672">())</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+    <span style="color:#75715e">// Adapt to TransactionAspectSupport&#39;s invokeWithinTransaction...
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> invokeWithinTransaction<span style="color:#f92672">(</span>invocation<span style="color:#f92672">.</span><span style="color:#a6e22e">getMethod</span><span style="color:#f92672">(),</span> targetClass<span style="color:#f92672">,</span> <span style="color:#66d9ef">new</span> InvocationCallback<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        <span style="color:#a6e22e">@Override</span>
+        <span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">proceedWithInvocation</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> Throwable <span style="color:#f92672">{</span>
+            <span style="color:#75715e">//事务执行完毕后调用链继续向下执行
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span> invocation<span style="color:#f92672">.</span><span style="color:#a6e22e">proceed</span><span style="color:#f92672">();</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">});</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>invokeWithinTransaction简略版源码(仅保留PlatformTransactionManager部分):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> Object <span style="color:#a6e22e">invokeWithinTransaction</span><span style="color:#f92672">(</span>Method method<span style="color:#f92672">,</span> Class<span style="color:#f92672">&lt;?&gt;</span> targetClass<span style="color:#f92672">,</span> <span style="color:#66d9ef">final</span> InvocationCallback invocation<span style="color:#f92672">){</span>
+    <span style="color:#75715e">// If the transaction attribute is null, the method is non-transactional.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">final</span> TransactionAttribute txAttr <span style="color:#f92672">=</span> getTransactionAttributeSource<span style="color:#f92672">()</span>
+        <span style="color:#f92672">.</span><span style="color:#a6e22e">getTransactionAttribute</span><span style="color:#f92672">(</span>method<span style="color:#f92672">,</span> targetClass<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">final</span> PlatformTransactionManager tm <span style="color:#f92672">=</span> determineTransactionManager<span style="color:#f92672">(</span>txAttr<span style="color:#f92672">);</span>
+    <span style="color:#75715e">//得到方法名
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">final</span> String joinpointIdentification <span style="color:#f92672">=</span> methodIdentification<span style="color:#f92672">(</span>method<span style="color:#f92672">,</span> targetClass<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAttr <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">||</span> <span style="color:#f92672">!(</span>tm <span style="color:#66d9ef">instanceof</span> CallbackPreferringPlatformTransactionManager<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// Standard transaction demarcation with getTransaction and commit/rollback calls.
+</span><span style="color:#75715e"></span>        TransactionInfo txInfo <span style="color:#f92672">=</span> createTransactionIfNecessary<span style="color:#f92672">(</span>tm<span style="color:#f92672">,</span> txAttr<span style="color:#f92672">,</span> joinpointIdentification<span style="color:#f92672">);</span>
+        Object retVal <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">// This is an around advice: Invoke the next interceptor in the chain.
+</span><span style="color:#75715e"></span>            <span style="color:#75715e">// This will normally result in a target object being invoked.
+</span><span style="color:#75715e"></span>            retVal <span style="color:#f92672">=</span> invocation<span style="color:#f92672">.</span><span style="color:#a6e22e">proceedWithInvocation</span><span style="color:#f92672">();</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Throwable ex<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">// target invocation exception
+</span><span style="color:#75715e"></span>            completeTransactionAfterThrowing<span style="color:#f92672">(</span>txInfo<span style="color:#f92672">,</span> ex<span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">throw</span> ex<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+            cleanupTransactionInfo<span style="color:#f92672">(</span>txInfo<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+        commitTransactionAfterReturning<span style="color:#f92672">(</span>txInfo<span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">return</span> retVal<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h3 id="事务管理器">事务管理器</h3>
+<p>determineTransactionManager方法用以确定使用的事务管理器:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> PlatformTransactionManager <span style="color:#a6e22e">determineTransactionManager</span><span style="color:#f92672">(</span>TransactionAttribute txAttr<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">//如果没有事务属性，那么仅从缓存中查找，找不到返回null
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAttr <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">||</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">beanFactory</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> getTransactionManager<span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    String qualifier <span style="color:#f92672">=</span> txAttr<span style="color:#f92672">.</span><span style="color:#a6e22e">getQualifier</span><span style="color:#f92672">();</span>
+    <span style="color:#75715e">//如果@Transactional注解配置了transactionManager或value属性(用以决定使用哪个事务管理器):
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">//首先查找缓存，找不到再去容器中按名称寻找
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>StringUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">hasText</span><span style="color:#f92672">(</span>qualifier<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> determineQualifiedTransactionManager<span style="color:#f92672">(</span>qualifier<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>StringUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">hasText</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">transactionManagerBeanName</span><span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> determineQualifiedTransactionManager<span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">transactionManagerBeanName</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//去容器中按类型(Class)查找
+</span><span style="color:#75715e"></span>        PlatformTransactionManager defaultTransactionManager <span style="color:#f92672">=</span> getTransactionManager<span style="color:#f92672">();</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>defaultTransactionManager <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            defaultTransactionManager <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">beanFactory</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getBean</span><span style="color:#f92672">(</span>PlatformTransactionManager<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">transactionManagerCache</span><span style="color:#f92672">.</span><span style="color:#a6e22e">putIfAbsent</span><span style="color:#f92672">(</span>
+                    DEFAULT_TRANSACTION_MANAGER_KEY<span style="color:#f92672">,</span> defaultTransactionManager<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#66d9ef">return</span> defaultTransactionManager<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>对于我们使用的DataSourceTransactionManager，类图:</p>
+<p><img src="/images/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/DataSourceTransactionManager.jpg" alt="DataSourceTransactionManager"></p>
+<p>afterPropertiesSet方法只是对dataSource进行了检查。</p>
+<h3 id="datasource">DataSource</h3>
+<p>DriverManagerDataSource类图:</p>
+<p><img src="/images/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/DriverManagerDataSource.jpg" alt="DriverManagerDataSource类图"></p>
+<p>其中CommonDataSource、Wrapper、DataSource均位于javax.sql包下。</p>
+<h3 id="事务开启">事务开启</h3>
+<p>invocation.proceedWithInvocation()便是我们的逻辑，而createTransactionIfNecessary便是在逻辑执行前开启事务。</p>
+<p>TransactionAspectSupport.createTransactionIfNecessary:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">protected</span> TransactionInfo <span style="color:#a6e22e">createTransactionIfNecessary</span><span style="color:#f92672">(</span>
+    PlatformTransactionManager tm<span style="color:#f92672">,</span> TransactionAttribute txAttr<span style="color:#f92672">,</span> <span style="color:#66d9ef">final</span> String joinpointIdentification<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// If no name specified, apply method identification as transaction name.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAttr <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> txAttr<span style="color:#f92672">.</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        txAttr <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> DelegatingTransactionAttribute<span style="color:#f92672">(</span>txAttr<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#a6e22e">@Override</span>
+            <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">return</span> joinpointIdentification<span style="color:#f92672">;</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">};</span>
+    <span style="color:#f92672">}</span>
+    TransactionStatus status <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txAttr <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>tm <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            status <span style="color:#f92672">=</span> tm<span style="color:#f92672">.</span><span style="color:#a6e22e">getTransaction</span><span style="color:#f92672">(</span>txAttr<span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> prepareTransactionInfo<span style="color:#f92672">(</span>tm<span style="color:#f92672">,</span> txAttr<span style="color:#f92672">,</span> joinpointIdentification<span style="color:#f92672">,</span> status<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>此部分的核心逻辑在getTransaction和prepareTransactionInfo方法，源码较长，下面依然按部分整理。</p>
+<h4 id="是否已存在事务">是否已存在事务</h4>
+<p>目的在于支撑事务的传播性。</p>
+<p>源码位于DataSourceTransactionManager.doGetTransaction，核心逻辑在TransactionSynchronizationManager.doGetResource:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> Object <span style="color:#a6e22e">doGetResource</span><span style="color:#f92672">(</span>Object actualKey<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Map<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">,</span> Object<span style="color:#f92672">&gt;</span> map <span style="color:#f92672">=</span> resources<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>map <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    Object value <span style="color:#f92672">=</span> map<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span>actualKey<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// Transparently remove ResourceHolder that was marked as void...
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>value <span style="color:#66d9ef">instanceof</span> ResourceHolder <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">((</span>ResourceHolder<span style="color:#f92672">)</span> value<span style="color:#f92672">).</span><span style="color:#a6e22e">isVoid</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        map<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">(</span>actualKey<span style="color:#f92672">);</span>
+        <span style="color:#75715e">// Remove entire ThreadLocal if empty...
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>map<span style="color:#f92672">.</span><span style="color:#a6e22e">isEmpty</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+            resources<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">();</span>
+        <span style="color:#f92672">}</span>
+        value <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> value<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>actualKey实际上是DataSource对象，resources是一个ThreadLocal对象，其声明源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> ThreadLocal<span style="color:#f92672">&lt;</span>Map<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">,</span> Object<span style="color:#f92672">&gt;&gt;</span> resources <span style="color:#f92672">=</span>
+            <span style="color:#66d9ef">new</span> NamedThreadLocal<span style="color:#f92672">&lt;</span>Map<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">,</span> Object<span style="color:#f92672">&gt;&gt;(</span><span style="color:#e6db74">&#34;Transactional resources&#34;</span><span style="color:#f92672">);</span>
+</code></pre></div><p>从这里可以得出结论:</p>
+<p><strong>是否存在事务指的是在当前线程、当前数据源(DataSource)中是否存在处于活动状态的事务</strong>。</p>
+<h4 id="事务已存在">事务已存在</h4>
+<p>如果检测到已存在事务，那么就要考虑事务的传播特性(行为).此部分源码位于AbstractPlatformTransactionManager.handleExistingTransaction，下面按照不同的传播特性展开。</p>
+<h5 id="propagation_never">PROPAGATION_NEVER</h5>
+<p>即当前方法需要在非事务的环境下执行，如果有事务存在，那么抛出异常。相关源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>definition<span style="color:#f92672">.</span><span style="color:#a6e22e">getPropagationBehavior</span><span style="color:#f92672">()</span> <span style="color:#f92672">==</span> TransactionDefinition<span style="color:#f92672">.</span><span style="color:#a6e22e">PROPAGATION_NEVER</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalTransactionStateException<span style="color:#f92672">(</span>
+        <span style="color:#e6db74">&#34;Existing transaction found for transaction marked with propagation &#39;never&#39;&#34;</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h5 id="propagation_not_supported">PROPAGATION_NOT_SUPPORTED</h5>
+<p>与前者的区别在于，如果有事务存在，那么将事务挂起，而不是抛出异常。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>definition<span style="color:#f92672">.</span><span style="color:#a6e22e">getPropagationBehavior</span><span style="color:#f92672">()</span> <span style="color:#f92672">==</span> TransactionDefinition<span style="color:#f92672">.</span><span style="color:#a6e22e">PROPAGATION_NOT_SUPPORTED</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Object suspendedResources <span style="color:#f92672">=</span> suspend<span style="color:#f92672">(</span>transaction<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">boolean</span> newSynchronization <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>getTransactionSynchronization<span style="color:#f92672">()</span> <span style="color:#f92672">==</span> SYNCHRONIZATION_ALWAYS<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">return</span> prepareTransactionStatus<span style="color:#f92672">(</span>
+        definition<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">,</span> newSynchronization<span style="color:#f92672">,</span> debugEnabled<span style="color:#f92672">,</span> suspendedResources<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h6 id="事务挂起">事务挂起</h6>
+<p>此部分的核心在于suspend方法，最终调用TransactionSynchronizationManager.doUnbindResource:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> Object <span style="color:#a6e22e">doUnbindResource</span><span style="color:#f92672">(</span>Object actualKey<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Map<span style="color:#f92672">&lt;</span>Object<span style="color:#f92672">,</span> Object<span style="color:#f92672">&gt;</span> map <span style="color:#f92672">=</span> resources<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>map <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    Object value <span style="color:#f92672">=</span> map<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">(</span>actualKey<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// Remove entire ThreadLocal if empty...
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>map<span style="color:#f92672">.</span><span style="color:#a6e22e">isEmpty</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        resources<span style="color:#f92672">.</span><span style="color:#a6e22e">remove</span><span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">// Transparently suppress a ResourceHolder that was marked as void...
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>value <span style="color:#66d9ef">instanceof</span> ResourceHolder <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">((</span>ResourceHolder<span style="color:#f92672">)</span> value<span style="color:#f92672">).</span><span style="color:#a6e22e">isVoid</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        value <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> value<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看出，<strong>所谓的事务挂起其实就是一个移除当前线程、数据源活动事务对象的过程</strong>。</p>
+<p>同时注意getTransaction方法返回的是一个TransactionStatus对象，<strong>被挂起的事务的各种状态都被保存在此对象中</strong>。</p>
+<p>那么挂起这个操作到底是如何实现(起作用)的呢?</p>
+<p>DataSourceTransactionManager.doSuspend:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> Object <span style="color:#a6e22e">doSuspend</span><span style="color:#f92672">(</span>Object transaction<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    DataSourceTransactionObject txObject <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>DataSourceTransactionObject<span style="color:#f92672">)</span> transaction<span style="color:#f92672">;</span>
+    txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">setConnectionHolder</span><span style="color:#f92672">(</span><span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+    ConnectionHolder conHolder <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>ConnectionHolder<span style="color:#f92672">)</span>
+            TransactionSynchronizationManager<span style="color:#f92672">.</span><span style="color:#a6e22e">unbindResource</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">dataSource</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">return</span> conHolder<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>其实玄机就在于将ConnectionHolder设为null这一行，因为<strong>一个ConnectionHolder对象就代表了一个数据库连接，将ConnectionHolder设为null就意味着我们下次要使用连接时，将重新从连接池获取，而新的连接的自动提交是为true的</strong>。</p>
+<h5 id="propagation_requires_new">PROPAGATION_REQUIRES_NEW</h5>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>definition<span style="color:#f92672">.</span><span style="color:#a6e22e">getPropagationBehavior</span><span style="color:#f92672">()</span> <span style="color:#f92672">==</span> TransactionDefinition<span style="color:#f92672">.</span><span style="color:#a6e22e">PROPAGATION_REQUIRES_NEW</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    SuspendedResourcesHolder suspendedResources <span style="color:#f92672">=</span> suspend<span style="color:#f92672">(</span>transaction<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">boolean</span> newSynchronization <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>getTransactionSynchronization<span style="color:#f92672">()</span> <span style="color:#f92672">!=</span> SYNCHRONIZATION_NEVER<span style="color:#f92672">);</span>
+    DefaultTransactionStatus status <span style="color:#f92672">=</span> newTransactionStatus<span style="color:#f92672">(</span>
+            definition<span style="color:#f92672">,</span> transaction<span style="color:#f92672">,</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">,</span> newSynchronization<span style="color:#f92672">,</span> debugEnabled<span style="color:#f92672">,</span> suspendedResources<span style="color:#f92672">);</span>
+    doBegin<span style="color:#f92672">(</span>transaction<span style="color:#f92672">,</span> definition<span style="color:#f92672">);</span>
+    prepareSynchronization<span style="color:#f92672">(</span>status<span style="color:#f92672">,</span> definition<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">return</span> status<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看出，这其实是一个<strong>挂起当前活动事务并创建新事务的过程</strong>，doBegin方法是事务开启的核心，将在后面进行说明。</p>
+<h5 id="propagation_nested">PROPAGATION_NESTED</h5>
+<p>其意义:</p>
+<blockquote>
+<p>PROPAGATION_NESTED 开始一个 &ldquo;嵌套的&rdquo; 事务,  它是已经存在事务的一个真正的子事务. 嵌套事务开始执行时,  它将取得一个 savepoint. 如果这个嵌套事务失败, 我们将回滚到此 savepoint. 嵌套事务是外部事务的一部分, 只有外部事务结束后它才会被提交. </p>
+</blockquote>
+<p>摘自: <a href="http://www.iteye.com/topic/35907">解惑 spring 嵌套事务</a></p>
+<p>核心源码(忽略JTA部分):</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>definition<span style="color:#f92672">.</span><span style="color:#a6e22e">getPropagationBehavior</span><span style="color:#f92672">()</span> <span style="color:#f92672">==</span> TransactionDefinition<span style="color:#f92672">.</span><span style="color:#a6e22e">PROPAGATION_NESTED</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>useSavepointForNestedTransaction<span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// Create savepoint within existing Spring-managed transaction,
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">// through the SavepointManager API implemented by TransactionStatus.
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">// Usually uses JDBC 3.0 savepoints. Never activates Spring synchronization.
+</span><span style="color:#75715e"></span>        DefaultTransactionStatus status <span style="color:#f92672">=</span>
+            prepareTransactionStatus<span style="color:#f92672">(</span>definition<span style="color:#f92672">,</span> transaction<span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">,</span> debugEnabled<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+        status<span style="color:#f92672">.</span><span style="color:#a6e22e">createAndHoldSavepoint</span><span style="color:#f92672">();</span>
+        <span style="color:#66d9ef">return</span> status<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>关键在于如何创建SavePoint, AbstractTransactionStatus.createAndHoldSavepoint:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">createAndHoldSavepoint</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> TransactionException <span style="color:#f92672">{</span>
+    setSavepoint<span style="color:#f92672">(</span>getSavepointManager<span style="color:#f92672">().</span><span style="color:#a6e22e">createSavepoint</span><span style="color:#f92672">());</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>DefaultTransactionStatus.getSavepointManager:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> SavepointManager <span style="color:#a6e22e">getSavepointManager</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>isTransactionSavepointManager<span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> NestedTransactionNotSupportedException<span style="color:#f92672">(</span>
+            <span style="color:#e6db74">&#34;Transaction object [&#34;</span> <span style="color:#f92672">+</span> getTransaction<span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;] does not support savepoints&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>SavepointManager<span style="color:#f92672">)</span> getTransaction<span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看出，SavepointManager实际上从Transaction强转而来，Transaction在Spring都是用Object引用的，那么这到底是个什么东西?</p>
+<h6 id="debug环境搭建">debug环境搭建</h6>
+<ul>
+<li>
+<p>安装Mysql数据库(或其它支持jdbc)并正确配置数据库连接.</p>
+</li>
+<li>
+<p>定义两个bean，代表我们的业务逻辑:</p>
+<ul>
+<li>
+<p>TransactionBean:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Component</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TransactionBean</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">private</span> NestedBean nestedBean<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">public</span> NestedBean <span style="color:#a6e22e">getNestedBean</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> nestedBean<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">setNestedBean</span><span style="color:#f92672">(</span>NestedBean nestedBean<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">nestedBean</span> <span style="color:#f92672">=</span> nestedBean<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+      
+    <span style="color:#a6e22e">@Transactional</span><span style="color:#f92672">(</span>propagation <span style="color:#f92672">=</span> Propagation<span style="color:#f92672">.</span><span style="color:#a6e22e">REQUIRED</span><span style="color:#f92672">)</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">process</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;事务执行&#34;</span><span style="color:#f92672">);</span>
+        nestedBean<span style="color:#f92672">.</span><span style="color:#a6e22e">nest</span><span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div></li>
+<li>
+<p>NestedBean:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Component</span>
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">NestedBean</span> <span style="color:#f92672">{</span>
+    <span style="color:#a6e22e">@Transactional</span><span style="color:#f92672">(</span>propagation <span style="color:#f92672">=</span> Propagation<span style="color:#f92672">.</span><span style="color:#a6e22e">NESTED</span><span style="color:#f92672">)</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">nest</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;嵌套事务&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div></li>
+</ul>
+</li>
+<li>
+<p>配置文件:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">id=</span><span style="color:#e6db74">&#34;nestedBean&#34;</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;base.transaction.NestedBean&#34;</span> <span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;bean</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;base.transaction.TransactionBean&#34;</span><span style="color:#f92672">&gt;</span>
+  <span style="color:#f92672">&lt;property</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;nestedBean&#34;</span> <span style="color:#a6e22e">ref=</span><span style="color:#e6db74">&#34;nestedBean&#34;</span> <span style="color:#f92672">/&gt;</span>
+<span style="color:#f92672">&lt;/bean&gt;</span>
+</code></pre></div></li>
+<li>
+<p>入口:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+  ClassPathXmlApplicationContext context <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ClassPathXmlApplicationContext<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;config.xml&#34;</span><span style="color:#f92672">);</span>
+    TransactionBean bean <span style="color:#f92672">=</span> context<span style="color:#f92672">.</span><span style="color:#a6e22e">getBean</span><span style="color:#f92672">(</span>TransactionBean<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+    bean<span style="color:#f92672">.</span><span style="color:#a6e22e">process</span><span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div></li>
+</ul>
+<p>这样将断点打在合适的位置便可以得到事务对象究竟是什么。</p>
+<p>注意:</p>
+<p><strong>nest方法必须在一个单独的业务bean中</strong>，否则对nest的调用并不会导致事务获取的触发。这是由JDK动态代理的实现机制决定的，<strong>调用当前类的方法并不会触发代理逻辑(InvocationHandler)</strong>。</p>
+<p>这一点可以运行demo:test.proxy.JDKProxy看出。</p>
+<p>运行debug可以发现，<strong>对于DataSourceTransactionManager，事务对象其实是其内部类DataSourceTransactionObject</strong>.</p>
+<h6 id="事务对象">事务对象</h6>
+<p>DataSourceTransactionObject的类图如下:</p>
+<p><img src="/images/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/DataSourceTransactionObject.jpg" alt="DataSourceTransactionObject类图"></p>
+<h6 id="savepoint">Savepoint</h6>
+<p>位于java.sql包下，对于Mysql来说，由Mysql驱动提供实现，类图:</p>
+<p><img src="/images/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/Savepoint.jpg" alt="Savepoint类图"></p>
+<p>下面来看一下Savepoint到底是如何被创建的。</p>
+<p>JdbcTransactionObjectSupport.createSavepoint简略版源码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">public</span> Object <span style="color:#a6e22e">createSavepoint</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> TransactionException <span style="color:#f92672">{</span>
+    ConnectionHolder conHolder <span style="color:#f92672">=</span> getConnectionHolderForSavepoint<span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">return</span> conHolder<span style="color:#f92672">.</span><span style="color:#a6e22e">createSavepoint</span><span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>ConnectionHolder.createSavepoint:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> Savepoint <span style="color:#a6e22e">createSavepoint</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> SQLException <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">savepointCounter</span><span style="color:#f92672">++;</span>
+    <span style="color:#66d9ef">return</span> getConnection<span style="color:#f92672">().</span><span style="color:#a6e22e">setSavepoint</span><span style="color:#f92672">(</span>SAVEPOINT_NAME_PREFIX <span style="color:#f92672">+</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">savepointCounter</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>我们可以得出这样的结论:</p>
+<p><strong>Savepoint由java SQL标准定义，具体实现由数据库完成</strong>。从mysql的客户端可以直接执行命令<code>savepoint xx</code>可以看出这一点。</p>
+<h5 id="其它">其它</h5>
+<p>略。</p>
+<h4 id="事务创建">事务创建</h4>
+<p>如果之前不存在事务，那么就需要创建了，核心逻辑位于DataSourceTransactionManager.doBegin:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#a6e22e">@Override</span>
+<span style="color:#66d9ef">protected</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">doBegin</span><span style="color:#f92672">(</span>Object transaction<span style="color:#f92672">,</span> TransactionDefinition definition<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">//此时，txObject不为null，只是其核心的ConnectHolder属性为null
+</span><span style="color:#75715e"></span>    DataSourceTransactionObject txObject <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>DataSourceTransactionObject<span style="color:#f92672">)</span> transaction<span style="color:#f92672">;</span>
+    Connection con <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnectionHolder</span><span style="color:#f92672">()</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">||</span>
+            txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnectionHolder</span><span style="color:#f92672">().</span><span style="color:#a6e22e">isSynchronizedWithTransaction</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        Connection newCon <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">dataSource</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getConnection</span><span style="color:#f92672">();</span>
+        <span style="color:#75715e">//获得连接，可以看出ConnectionHolder是对Connection的包装
+</span><span style="color:#75715e"></span>        txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">setConnectionHolder</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> ConnectionHolder<span style="color:#f92672">(</span>newCon<span style="color:#f92672">),</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnectionHolder</span><span style="color:#f92672">().</span><span style="color:#a6e22e">setSynchronizedWithTransaction</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+    con <span style="color:#f92672">=</span> txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnectionHolder</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getConnection</span><span style="color:#f92672">();</span>
+    <span style="color:#75715e">//设置是否只读和隔离级别
+</span><span style="color:#75715e"></span>    Integer previousIsolationLevel <span style="color:#f92672">=</span> DataSourceUtils<span style="color:#f92672">.</span><span style="color:#a6e22e">prepareConnectionForTransaction</span><span style="color:#f92672">(</span>con<span style="color:#f92672">,</span> definition<span style="color:#f92672">);</span>
+    txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">setPreviousIsolationLevel</span><span style="color:#f92672">(</span>previousIsolationLevel<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// Switch to manual commit if necessary. This is very expensive in some JDBC drivers,
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// so we don&#39;t want to do it unnecessarily (for example if we&#39;ve explicitly
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// configured the connection pool to set it already).
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>con<span style="color:#f92672">.</span><span style="color:#a6e22e">getAutoCommit</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">setMustRestoreAutoCommit</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+        con<span style="color:#f92672">.</span><span style="color:#a6e22e">setAutoCommit</span><span style="color:#f92672">(</span><span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnectionHolder</span><span style="color:#f92672">().</span><span style="color:#a6e22e">setTransactionActive</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">int</span> timeout <span style="color:#f92672">=</span> determineTimeout<span style="color:#f92672">(</span>definition<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>timeout <span style="color:#f92672">!=</span> TransactionDefinition<span style="color:#f92672">.</span><span style="color:#a6e22e">TIMEOUT_DEFAULT</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnectionHolder</span><span style="color:#f92672">().</span><span style="color:#a6e22e">setTimeoutInSeconds</span><span style="color:#f92672">(</span>timeout<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">// Bind the session holder to the thread.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">isNewConnectionHolder</span><span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        TransactionSynchronizationManager<span style="color:#f92672">.</span><span style="color:#a6e22e">bindResource</span><span style="color:#f92672">(</span>getDataSource<span style="color:#f92672">(),</span> txObject<span style="color:#f92672">.</span><span style="color:#a6e22e">getConnectionHolder</span><span style="color:#f92672">());</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>到这里便可以得出结论:</p>
+<p><strong>Spring事务的开启实际上是将数据库的自动提交设为false</strong>。</p>
+<h3 id="事务提交--回滚">事务提交 &amp; 回滚</h3>
+<p>其实就是对jdbc相应方法的封装，不再展开。</p>
+<h1 id="总结">总结</h1>
+<p>事务的本质其实是对数据库自动提交的关闭与开启，传播特性是Spring提出、实现、控制的概念，而隔离级别是对数据库实现的封装。</p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" data-id="cbd2c2a7afbdc03a7589c645c0008b6d" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+    <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Older
+      </strong>
+      <div class="article-nav-title">Spring Context源码分析</div>
+    </a>
+    
+
+    
+    <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Spring Mvc源码分析</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Spring Transaction源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Task源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-26 14:40:31 &#43;0000 UTC" itemprop="datePublished">2018-06-26</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Spring Transaction源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Mvc源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-25 15:03:57 &#43;0000 UTC" itemprop="datePublished">2018-06-25</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="Spring Transaction源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Transaction源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-15 14:57:50 &#43;0000 UTC" itemprop="datePublished">2018-06-15</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="Spring Transaction源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Context源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 23:19:43 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Spring Transaction源码分析" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Aop源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 12:08:31 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java">
+                    java
+                </a>
+                <span class="category-list-count">3</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">9</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">
+                    容器
+                </a>
+                <span class="category-list-count">3</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+        
+        <a href="https://dijun.cf/tags/spring" style="font-size: 12px;">spring</a>
+        
+        
+        <a href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8" style="font-size: 12px;">容器</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

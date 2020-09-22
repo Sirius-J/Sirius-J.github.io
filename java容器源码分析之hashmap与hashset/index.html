@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Java容器源码分析之HashMap与HashSet &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Java容器源码分析之HashMap与HashSet" />
+<meta property="og:description" content="HashMap与HashSet介绍
+HashMap是Java为我们提供的一个存放键值对的容器，通过键的hash值定位存储位置，具有很快的访问速度。但是其遍历顺序是不确定的，这里所说的不确定是指其遍历的顺序与放入顺序不一致、多次遍历输出顺序不一致(可能会放进数据导致reHash，改变原有顺序)。HashMap允许有一个null的键，对于值没做要求。HashMap也是个非线程安全的容器，在并发环境下可以使用ynchronizedMap方法使HashMap具有线程安全的能力，或者使用ConcurrentHashMap。
+HashSet是Java为我们提供的一个集合类容器，他不允许容器内元素重复，底层采用HashMap实现(适配器模式)。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/" />
+<meta property="article:published_time" content="2018-04-07T13:00:57+00:00" />
+<meta property="article:modified_time" content="2018-04-07T13:00:57+00:00" />
+
+    
+    <meta itemprop="name" content="Java容器源码分析之HashMap与HashSet">
+<meta itemprop="description" content="HashMap与HashSet介绍
+HashMap是Java为我们提供的一个存放键值对的容器，通过键的hash值定位存储位置，具有很快的访问速度。但是其遍历顺序是不确定的，这里所说的不确定是指其遍历的顺序与放入顺序不一致、多次遍历输出顺序不一致(可能会放进数据导致reHash，改变原有顺序)。HashMap允许有一个null的键，对于值没做要求。HashMap也是个非线程安全的容器，在并发环境下可以使用ynchronizedMap方法使HashMap具有线程安全的能力，或者使用ConcurrentHashMap。
+HashSet是Java为我们提供的一个集合类容器，他不允许容器内元素重复，底层采用HashMap实现(适配器模式)。">
+<meta itemprop="datePublished" content="2018-04-07T13:00:57+00:00" />
+<meta itemprop="dateModified" content="2018-04-07T13:00:57+00:00" />
+<meta itemprop="wordCount" content="1025">
+
+
+
+<meta itemprop="keywords" content="Java,容器," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Java容器源码分析之HashMap与HashSet"/>
+<meta name="twitter:description" content="HashMap与HashSet介绍
+HashMap是Java为我们提供的一个存放键值对的容器，通过键的hash值定位存储位置，具有很快的访问速度。但是其遍历顺序是不确定的，这里所说的不确定是指其遍历的顺序与放入顺序不一致、多次遍历输出顺序不一致(可能会放进数据导致reHash，改变原有顺序)。HashMap允许有一个null的键，对于值没做要求。HashMap也是个非线程安全的容器，在并发环境下可以使用ynchronizedMap方法使HashMap具有线程安全的能力，或者使用ConcurrentHashMap。
+HashSet是Java为我们提供的一个集合类容器，他不允许容器内元素重复，底层采用HashMap实现(适配器模式)。"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+          <a class="main-nav-link" href="/about/">About</a>
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+          <td><a class="main-nav-link" href="/about/">About</a></td>
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        16
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          5
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner2.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/">
+    <h1 class="article-title" itemprop="name">
+        Java容器源码分析之HashMap与HashSet
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-04-07 13:00:57 &#43;0000 UTC" itemprop="datePublished">2018-04-07</time>
+            &middot;
+            1025
+            words
+            &middot;
+            5
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/java">Java</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">容器</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="hashmap与hashset介绍">HashMap与HashSet介绍</h1>
+<p>HashMap是Java为我们提供的一个存放键值对的容器，通过键的hash值定位存储位置，具有很快的访问速度。但是其遍历顺序是不确定的，这里所说的不确定是指其遍历的顺序与放入顺序不一致、多次遍历输出顺序不一致(可能会放进数据导致reHash，改变原有顺序)。HashMap允许有一个null的键，对于值没做要求。HashMap也是个非线程安全的容器，在并发环境下可以使用ynchronizedMap方法使HashMap具有线程安全的能力，或者使用ConcurrentHashMap。</p>
+<p>HashSet是Java为我们提供的一个集合类容器，他不允许容器内元素重复，底层采用HashMap实现(适配器模式)。</p>
+<p>以下是HashMap的UML图与HashSet的Uml图：</p>
+<p><img src="/images/Java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8BHashMap%E4%B8%8EHashSet/1.png" alt="HashMap UML图"></p>
+<p><img src="/images/Java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8BHashMap%E4%B8%8EHashSet/2.png" alt="HashSet UML图"></p>
+<h1 id="hashmap源码分析">HashMap源码分析</h1>
+<h2 id="hashmap数据结构">HashMap数据结构</h2>
+<p>HashMap采用了一种数组+链表+红黑树(JDK1.8新增)的数据结构；</p>
+<p><img src="/images/Java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8BHashMap%E4%B8%8EHashSet/3.png" alt="HashMap数据结构"></p>
+<p>HashMap实际存放数据的是一个叫Entry的Node节点，它的定义如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Node</span><span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">implements</span> Map<span style="color:#f92672">.</span><span style="color:#a6e22e">Entry</span><span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> hash<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">final</span> K key<span style="color:#f92672">;</span>
+    V value<span style="color:#f92672">;</span>
+    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> next<span style="color:#f92672">;</span>
+
+    Node<span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> hash<span style="color:#f92672">,</span> K key<span style="color:#f92672">,</span> V value<span style="color:#f92672">,</span> Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> next<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">=</span> hash<span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">key</span> <span style="color:#f92672">=</span> key<span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">value</span> <span style="color:#f92672">=</span> value<span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> next<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> K <span style="color:#a6e22e">getKey</span><span style="color:#f92672">()</span>        <span style="color:#f92672">{</span> <span style="color:#66d9ef">return</span> key<span style="color:#f92672">;</span> <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> V <span style="color:#a6e22e">getValue</span><span style="color:#f92672">()</span>      <span style="color:#f92672">{</span> <span style="color:#66d9ef">return</span> value<span style="color:#f92672">;</span> <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> String <span style="color:#a6e22e">toString</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span> <span style="color:#66d9ef">return</span> key <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;=&#34;</span> <span style="color:#f92672">+</span> value<span style="color:#f92672">;</span> <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">hashCode</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> Objects<span style="color:#f92672">.</span><span style="color:#a6e22e">hashCode</span><span style="color:#f92672">(</span>key<span style="color:#f92672">)</span> <span style="color:#f92672">^</span> Objects<span style="color:#f92672">.</span><span style="color:#a6e22e">hashCode</span><span style="color:#f92672">(</span>value<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> V <span style="color:#a6e22e">setValue</span><span style="color:#f92672">(</span>V newValue<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        V oldValue <span style="color:#f92672">=</span> value<span style="color:#f92672">;</span>
+        value <span style="color:#f92672">=</span> newValue<span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">return</span> oldValue<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>Object o<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>o <span style="color:#f92672">==</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">)</span>
+            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>o <span style="color:#66d9ef">instanceof</span> Map<span style="color:#f92672">.</span><span style="color:#a6e22e">Entry</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            Map<span style="color:#f92672">.</span><span style="color:#a6e22e">Entry</span><span style="color:#f92672">&lt;?,?&gt;</span> e <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Map<span style="color:#f92672">.</span><span style="color:#a6e22e">Entry</span><span style="color:#f92672">&lt;?,?&gt;)</span>o<span style="color:#f92672">;</span>
+            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>Objects<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>key<span style="color:#f92672">,</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">getKey</span><span style="color:#f92672">())</span> <span style="color:#f92672">&amp;&amp;</span>
+                Objects<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>value<span style="color:#f92672">,</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">getValue</span><span style="color:#f92672">()))</span>
+                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>存入HashMap里的数据均用Entry封装起来，通过键值定位到数组的位置，当该位置为空时，放入Entry元素，当该位置不为空时通过equals比较该位置与放入元素的键值，当键值相等时直接替换，当键值不相等时，采用拉链法解决hash冲突。</p>
+<p>拉链法解决hash冲突：当hash冲突发生时，通过在该位置建立链表，将所有hash值相同但是equals不相等的元素通过链表链起来解决hash冲突；</p>
+<p>当HashMap中拉链的长度超过8时，HashMap将链表数据结构转换为红黑树，此时的查找时间复杂度降低为O(log n)。</p>
+<h2 id="hashmap方法解析">HashMap方法解析</h2>
+<h3 id="get方法">get方法</h3>
+<p>HashMap get方法源码如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> V <span style="color:#a6e22e">get</span><span style="color:#f92672">(</span>Object key<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> e<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>e <span style="color:#f92672">=</span> getNode<span style="color:#f92672">(</span>hash<span style="color:#f92672">(</span>key<span style="color:#f92672">),</span> key<span style="color:#f92672">))</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">?</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">:</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">value</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>首先先拿到key的hash值，然后通过hash值定位到数组中该hash位置的node，然后返回node的value；</p>
+<p>计算key的hash值方法hash():</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">hash</span><span style="color:#f92672">(</span>Object key<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">int</span> h<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#f92672">(</span>key <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">?</span> 0 <span style="color:#f92672">:</span> <span style="color:#f92672">(</span>h <span style="color:#f92672">=</span> key<span style="color:#f92672">.</span><span style="color:#a6e22e">hashCode</span><span style="color:#f92672">())</span> <span style="color:#f92672">^</span> <span style="color:#f92672">(</span>h <span style="color:#f92672">&gt;&gt;&gt;</span> 16<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>计算一个key的hash值得具体算法是：当key为null时，hash值为0，不为null时，首先得到该key的hashCode，然后异或上key的hashCode值无符号右移16位。</p>
+<p>通过hash值得到数组指定位置node元素方法getNode()：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">final</span> Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">getNode</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> hash<span style="color:#f92672">,</span> Object key<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> tab<span style="color:#f92672">;</span> Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> first<span style="color:#f92672">,</span> e<span style="color:#f92672">;</span> <span style="color:#66d9ef">int</span> n<span style="color:#f92672">;</span> K k<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>tab <span style="color:#f92672">=</span> table<span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">(</span>n <span style="color:#f92672">=</span> tab<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">)</span> <span style="color:#f92672">&gt;</span> 0 <span style="color:#f92672">&amp;&amp;</span>
+        <span style="color:#f92672">(</span>first <span style="color:#f92672">=</span> tab<span style="color:#f92672">[(</span>n <span style="color:#f92672">-</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> hash<span style="color:#f92672">])</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>first<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">==</span> hash <span style="color:#f92672">&amp;&amp;</span> <span style="color:#75715e">// always check first node
+</span><span style="color:#75715e"></span>            <span style="color:#f92672">((</span>k <span style="color:#f92672">=</span> first<span style="color:#f92672">.</span><span style="color:#a6e22e">key</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> key <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>key <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> key<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>k<span style="color:#f92672">))))</span>
+            <span style="color:#66d9ef">return</span> first<span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>e <span style="color:#f92672">=</span> first<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>first <span style="color:#66d9ef">instanceof</span> TreeNode<span style="color:#f92672">)</span>
+                <span style="color:#66d9ef">return</span> <span style="color:#f92672">((</span>TreeNode<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>first<span style="color:#f92672">).</span><span style="color:#a6e22e">getTreeNode</span><span style="color:#f92672">(</span>hash<span style="color:#f92672">,</span> key<span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">do</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">==</span> hash <span style="color:#f92672">&amp;&amp;</span>
+                    <span style="color:#f92672">((</span>k <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">key</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> key <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>key <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> key<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>k<span style="color:#f92672">))))</span>
+                    <span style="color:#66d9ef">return</span> e<span style="color:#f92672">;</span>
+            <span style="color:#f92672">}</span> <span style="color:#66d9ef">while</span> <span style="color:#f92672">((</span>e <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>首先，通过(n - 1) &amp; hash得到元素在数组中的位置然后取出元素，其中n是数组的总长度；当这个元素与要取的key相等(==与equals)时，该元素就是要取得元素；当不相等时，即判断为hash冲突了；当hash冲突时，HashMap通过查找链表(红黑树)的方式查找该位置的拉链(红黑树)，直到找到一个元素与key equals相等时返回或者没找到返回null，此时的查找就变为对链表或红黑树的遍历。</p>
+<h3 id="put方法">put方法</h3>
+<p>HashMap put方法源码如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> V <span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>K key<span style="color:#f92672">,</span> V value<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> putVal<span style="color:#f92672">(</span>hash<span style="color:#f92672">(</span>key<span style="color:#f92672">),</span> key<span style="color:#f92672">,</span> value<span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">,</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+
+<span style="color:#66d9ef">final</span> V <span style="color:#a6e22e">putVal</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> hash<span style="color:#f92672">,</span> K key<span style="color:#f92672">,</span> V value<span style="color:#f92672">,</span> <span style="color:#66d9ef">boolean</span> onlyIfAbsent<span style="color:#f92672">,</span>
+                <span style="color:#66d9ef">boolean</span> evict<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> tab<span style="color:#f92672">;</span> Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> p<span style="color:#f92672">;</span> <span style="color:#66d9ef">int</span> n<span style="color:#f92672">,</span> i<span style="color:#f92672">;</span>
+    <span style="color:#75715e">//判断table数组是否已经初始化
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>tab <span style="color:#f92672">=</span> table<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>n <span style="color:#f92672">=</span> tab<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span>
+        <span style="color:#75715e">//没有初始化，开始初始化table数组
+</span><span style="color:#75715e"></span>        n <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>tab <span style="color:#f92672">=</span> resize<span style="color:#f92672">()).</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span>
+    <span style="color:#75715e">//通过(n - 1) &amp; hash获取该元素在table中该放入的位置
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>p <span style="color:#f92672">=</span> tab<span style="color:#f92672">[</span>i <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>n <span style="color:#f92672">-</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> hash<span style="color:#f92672">])</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span>
+        <span style="color:#75715e">//若该位置为空，则直接放入元素
+</span><span style="color:#75715e"></span>        tab<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> newNode<span style="color:#f92672">(</span>hash<span style="color:#f92672">,</span> key<span style="color:#f92672">,</span> value<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> e<span style="color:#f92672">;</span> K k<span style="color:#f92672">;</span>
+        <span style="color:#75715e">//该位置不为空时，开始判断是否是hash冲突
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>p<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">==</span> hash <span style="color:#f92672">&amp;&amp;</span>
+            <span style="color:#f92672">((</span>k <span style="color:#f92672">=</span> p<span style="color:#f92672">.</span><span style="color:#a6e22e">key</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> key <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>key <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> key<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>k<span style="color:#f92672">))))</span>
+            e <span style="color:#f92672">=</span> p<span style="color:#f92672">;</span>
+        <span style="color:#75715e">//不是hash冲突，开始判断该位置的数据结构是否是红黑树
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>p <span style="color:#66d9ef">instanceof</span> TreeNode<span style="color:#f92672">)</span>
+            <span style="color:#75715e">//当是红黑树时，使用红黑树插入方式插入元素
+</span><span style="color:#75715e"></span>            e <span style="color:#f92672">=</span> <span style="color:#f92672">((</span>TreeNode<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>p<span style="color:#f92672">).</span><span style="color:#a6e22e">putTreeVal</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> tab<span style="color:#f92672">,</span> hash<span style="color:#f92672">,</span> key<span style="color:#f92672">,</span> value<span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">//该位置是链表数据结构，遍历链表，找到一个为空位置，插入元素
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> binCount <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> <span style="color:#f92672">;</span> <span style="color:#f92672">++</span>binCount<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>e <span style="color:#f92672">=</span> p<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                    p<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> newNode<span style="color:#f92672">(</span>hash<span style="color:#f92672">,</span> key<span style="color:#f92672">,</span> value<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>binCount <span style="color:#f92672">&gt;=</span> TREEIFY_THRESHOLD <span style="color:#f92672">-</span> 1<span style="color:#f92672">)</span> <span style="color:#75715e">// -1 for 1st
+</span><span style="color:#75715e"></span>                        <span style="color:#75715e">//当链表长度超过临界值时，开始将链表转换为红黑树数据结构
+</span><span style="color:#75715e"></span>                        treeifyBin<span style="color:#f92672">(</span>tab<span style="color:#f92672">,</span> hash<span style="color:#f92672">);</span>
+                    <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+                <span style="color:#f92672">}</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">==</span> hash <span style="color:#f92672">&amp;&amp;</span>
+                    <span style="color:#f92672">((</span>k <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">key</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> key <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>key <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span> key<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>k<span style="color:#f92672">))))</span>
+                    <span style="color:#75715e">//当遍历到链表的某一个位置时，该位置元素与要插入元素equals相等时即判断两个元素相等，不用插入，跳出循环
+</span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+                p <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>e <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span> <span style="color:#75715e">// existing mapping for key
+</span><span style="color:#75715e"></span>            V oldValue <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">value</span><span style="color:#f92672">;</span>
+            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>onlyIfAbsent <span style="color:#f92672">||</span> oldValue <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span>
+                e<span style="color:#f92672">.</span><span style="color:#a6e22e">value</span> <span style="color:#f92672">=</span> value<span style="color:#f92672">;</span>
+            afterNodeAccess<span style="color:#f92672">(</span>e<span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">return</span> oldValue<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#f92672">++</span>modCount<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(++</span>size <span style="color:#f92672">&gt;</span> threshold<span style="color:#f92672">)</span>
+        <span style="color:#75715e">//当此时HashMap长度大于长度 * 扩容因子时扩容
+</span><span style="color:#75715e"></span>        resize<span style="color:#f92672">();</span>
+    afterNodeInsertion<span style="color:#f92672">(</span>evict<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>HashMap在put一个元素的时候会去调用其putVal方法，在putVal方法中，首先会去检测用来存储元素的数组是否已经初始化了，因为HashMap与ArrayList一样采用了延迟为数组分配空间的策略，我们可以来看下它的构造方法：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">HashMap</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">loadFactor</span> <span style="color:#f92672">=</span> DEFAULT_LOAD_FACTOR<span style="color:#f92672">;</span> <span style="color:#75715e">// all other fields defaulted
+</span><span style="color:#75715e"></span><span style="color:#f92672">}</span>
+</code></pre></div><p>默认的构造方法中，就设置了一个扩容因子。</p>
+<p>若数组已经初始化了，HashMap会通过(n - 1) &amp; hash计算出该元素在数组中的位置，当该位置没有元素时，直接放入，当该位置已经有元素了，HashMap开始判断是否与该位置的元素发生了Hash冲突。</p>
+<p>当发生了Hash冲突时，HashMap会判断该位置是通过红黑树还是链表，然后通过红黑树或者链表添加数据的方式添加新元素。</p>
+<p>最后HashMap会检查此时数组的长度，当长度超过数组容量*扩容因子时会开始扩容的过程。</p>
+<p>HashMap扩容函数resize方法：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#75715e">//resize兼容了扩容和HashMap初始化的过程
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">final</span> Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> <span style="color:#a6e22e">resize</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> oldTab <span style="color:#f92672">=</span> table<span style="color:#f92672">;</span>
+    <span style="color:#75715e">//获取数组长度
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> oldCap <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>oldTab <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">?</span> 0 <span style="color:#f92672">:</span> oldTab<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span>
+    <span style="color:#75715e">//获取临界长度
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> oldThr <span style="color:#f92672">=</span> threshold<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">int</span> newCap<span style="color:#f92672">,</span> newThr <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>oldCap <span style="color:#f92672">&gt;</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//当现在数组长度大于0时即说明HashMap已经初始化了，开始扩容
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>oldCap <span style="color:#f92672">&gt;=</span> MAXIMUM_CAPACITY<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">//当长度超过1&lt;&lt;30长度时，直接将新长度设置为Integer.MAX_VALUE，为1&lt;&lt;30的两倍
+</span><span style="color:#75715e"></span>            threshold <span style="color:#f92672">=</span> Integer<span style="color:#f92672">.</span><span style="color:#a6e22e">MAX_VALUE</span><span style="color:#f92672">;</span>
+            <span style="color:#66d9ef">return</span> oldTab<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>newCap <span style="color:#f92672">=</span> oldCap <span style="color:#f92672">&lt;&lt;</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">&lt;</span> MAXIMUM_CAPACITY <span style="color:#f92672">&amp;&amp;</span>
+                    oldCap <span style="color:#f92672">&gt;=</span> DEFAULT_INITIAL_CAPACITY<span style="color:#f92672">)</span>
+            <span style="color:#75715e">//当(oldCap &lt;&lt; 1) &lt; MAXIMUM_CAPACITY且oldCap大于默认长度时，直接扩容为原有长度的两倍
+</span><span style="color:#75715e"></span>            newThr <span style="color:#f92672">=</span> oldThr <span style="color:#f92672">&lt;&lt;</span> 1<span style="color:#f92672">;</span> <span style="color:#75715e">// double threshold
+</span><span style="color:#75715e"></span>    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>oldThr <span style="color:#f92672">&gt;</span> 0<span style="color:#f92672">)</span>
+        <span style="color:#75715e">//当数组没有初始化时，若oldThr&gt;0，则说明调用的是有参数的构造函数
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">//此时新长度就是带参数构造函数计算出来的临界长度
+</span><span style="color:#75715e"></span>        newCap <span style="color:#f92672">=</span> oldThr<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//数组未初始化，且调用的是没有参数构造函数
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">//数组长度为默认值1&lt;&lt;4
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">//计算临界长度
+</span><span style="color:#75715e"></span>        newCap <span style="color:#f92672">=</span> DEFAULT_INITIAL_CAPACITY<span style="color:#f92672">;</span>
+        newThr <span style="color:#f92672">=</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span><span style="color:#f92672">)(</span>DEFAULT_LOAD_FACTOR <span style="color:#f92672">*</span> DEFAULT_INITIAL_CAPACITY<span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>newThr <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">float</span> ft <span style="color:#f92672">=</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">float</span><span style="color:#f92672">)</span>newCap <span style="color:#f92672">*</span> loadFactor<span style="color:#f92672">;</span>
+        newThr <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>newCap <span style="color:#f92672">&lt;</span> MAXIMUM_CAPACITY <span style="color:#f92672">&amp;&amp;</span> ft <span style="color:#f92672">&lt;</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">float</span><span style="color:#f92672">)</span>MAXIMUM_CAPACITY <span style="color:#f92672">?</span>
+                    <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span><span style="color:#f92672">)</span>ft <span style="color:#f92672">:</span> Integer<span style="color:#f92672">.</span><span style="color:#a6e22e">MAX_VALUE</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">//上面是计算新数组的长度，下面开始将旧数组中元素搬移到新数组中
+</span><span style="color:#75715e"></span>    threshold <span style="color:#f92672">=</span> newThr<span style="color:#f92672">;</span>
+    <span style="color:#a6e22e">@SuppressWarnings</span><span style="color:#f92672">({</span><span style="color:#e6db74">&#34;rawtypes&#34;</span><span style="color:#f92672">,</span><span style="color:#e6db74">&#34;unchecked&#34;</span><span style="color:#f92672">})</span>
+        Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> newTab <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[])</span><span style="color:#66d9ef">new</span> Node<span style="color:#f92672">[</span>newCap<span style="color:#f92672">];</span>
+    table <span style="color:#f92672">=</span> newTab<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>oldTab <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">//遍历旧数组
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> j <span style="color:#f92672">&lt;</span> oldCap<span style="color:#f92672">;</span> <span style="color:#f92672">++</span>j<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> e<span style="color:#f92672">;</span>
+            <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>e <span style="color:#f92672">=</span> oldTab<span style="color:#f92672">[</span>j<span style="color:#f92672">])</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                oldTab<span style="color:#f92672">[</span>j<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span>
+                    <span style="color:#75715e">//当该位置就一个元素时，重新计算该元素在新数组中的位置并放入该元素
+</span><span style="color:#75715e"></span>                    newTab<span style="color:#f92672">[</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">&amp;</span> <span style="color:#f92672">(</span>newCap <span style="color:#f92672">-</span> 1<span style="color:#f92672">)]</span> <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+                <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>e <span style="color:#66d9ef">instanceof</span> TreeNode<span style="color:#f92672">)</span>
+                    <span style="color:#75715e">//若该位置还有其他元素，且是红黑树的数据结构，执行红黑树迁移元素方案
+</span><span style="color:#75715e"></span>                    <span style="color:#f92672">((</span>TreeNode<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>e<span style="color:#f92672">).</span><span style="color:#a6e22e">split</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> newTab<span style="color:#f92672">,</span> j<span style="color:#f92672">,</span> oldCap<span style="color:#f92672">);</span>
+                <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span> <span style="color:#75715e">// preserve order
+</span><span style="color:#75715e"></span>                    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> loHead <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">,</span> loTail <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+                    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> hiHead <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">,</span> hiTail <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+                    Node<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> next<span style="color:#f92672">;</span>
+                    <span style="color:#66d9ef">do</span> <span style="color:#f92672">{</span>
+                        next <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">;</span>
+                        <span style="color:#75715e">//通过e.hash &amp; oldCap判断元素是否需要移动
+</span><span style="color:#75715e"></span>                        <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">&amp;</span> oldCap<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>loTail <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span>
+                                <span style="color:#75715e">//确定首元素
+</span><span style="color:#75715e"></span>                                loHead <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+                            <span style="color:#66d9ef">else</span>
+                                <span style="color:#75715e">//循环遍历将元素迁移至loHead为首的链表中
+</span><span style="color:#75715e"></span>                                loTail<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+                            loTail <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+                        <span style="color:#f92672">}</span>
+                        <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+                            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>hiTail <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span>
+                                hiHead <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+                            <span style="color:#66d9ef">else</span>
+                                hiTail<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+                            hiTail <span style="color:#f92672">=</span> e<span style="color:#f92672">;</span>
+                        <span style="color:#f92672">}</span>
+                    <span style="color:#f92672">}</span> <span style="color:#66d9ef">while</span> <span style="color:#f92672">((</span>e <span style="color:#f92672">=</span> next<span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>loTail <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                        <span style="color:#75715e">//loTail != null不为空说明元素不用移动，直接放在数组原位置
+</span><span style="color:#75715e"></span>                        loTail<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+                        newTab<span style="color:#f92672">[</span>j<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> loHead<span style="color:#f92672">;</span>
+                    <span style="color:#f92672">}</span>
+                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>hiTail <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                        <span style="color:#75715e">//hiTail != null说明元素需要移动，将链表放在j + oldCap新位置
+</span><span style="color:#75715e"></span>                        hiTail<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+                        newTab<span style="color:#f92672">[</span>j <span style="color:#f92672">+</span> oldCap<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> hiHead<span style="color:#f92672">;</span>
+                    <span style="color:#f92672">}</span>
+                <span style="color:#f92672">}</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">//完成扩容
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> newTab<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>这里需要讲一下的，扩容时通过e.hash &amp; oldCap判断元素是否需要移动，具体示例如下：</p>
+<ul>
+<li>
+<p>示例1：</p>
+<ul>
+<li>通过e.hash &amp; oldCap判断元素是否需要移动：
+e.hash = 10 0000 1010
+oldCap = 16 0001 0000
+&amp; = 0  0000 0000    //不需要移动</li>
+<li>通过(e.hash &amp; (oldCap-1))计算得到的下标位置：
+e.hash = 10 0000 1010
+oldCap - 1 = 15 0000 1111
+&amp; = 10 0000 1010    //位置没变</li>
+</ul>
+</li>
+<li>
+<p>示例2：</p>
+<ul>
+<li>通过e.hash &amp; oldCap判断元素是否需要移动：
+e.hash = 17 0001 0001
+oldCap = 16 0001 0000
+&amp; = 1  0001 0000    //元素需要移动，新的下标位置是原下标位置 + 原数组长度</li>
+<li>通过(e.hash &amp; (oldCap-1))计算得到的下标位置：
+e.hash = 17 0001 0001
+newCap - 1 = 31 0001 1111
+&amp; = 17 0001 0001    //位置为17</li>
+</ul>
+</li>
+</ul>
+<h1 id="hashset源码分析">HashSet源码分析</h1>
+<p>HashSet是通过HashMap实现的，首先我们来看下Hashset的构造函数：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">HashSet</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    map <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashMap<span style="color:#f92672">&lt;&gt;();</span>
+<span style="color:#f92672">}</span>
+
+<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">HashSet</span><span style="color:#f92672">(</span>Collection<span style="color:#f92672">&lt;?</span> <span style="color:#66d9ef">extends</span> E<span style="color:#f92672">&gt;</span> c<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    map <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashMap<span style="color:#f92672">&lt;&gt;(</span>Math<span style="color:#f92672">.</span><span style="color:#a6e22e">max</span><span style="color:#f92672">((</span><span style="color:#66d9ef">int</span><span style="color:#f92672">)</span> <span style="color:#f92672">(</span>c<span style="color:#f92672">.</span><span style="color:#a6e22e">size</span><span style="color:#f92672">()/.</span><span style="color:#a6e22e">75f</span><span style="color:#f92672">)</span> <span style="color:#f92672">+</span> 1<span style="color:#f92672">,</span> 16<span style="color:#f92672">));</span>
+    addAll<span style="color:#f92672">(</span>c<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+
+<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">HashSet</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> initialCapacity<span style="color:#f92672">,</span> <span style="color:#66d9ef">float</span> loadFactor<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    map <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashMap<span style="color:#f92672">&lt;&gt;(</span>initialCapacity<span style="color:#f92672">,</span> loadFactor<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+
+<span style="color:#66d9ef">public</span> <span style="color:#a6e22e">HashSet</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> initialCapacity<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    map <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashMap<span style="color:#f92672">&lt;&gt;(</span>initialCapacity<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+
+HashSet<span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> initialCapacity<span style="color:#f92672">,</span> <span style="color:#66d9ef">float</span> loadFactor<span style="color:#f92672">,</span> <span style="color:#66d9ef">boolean</span> dummy<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    map <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> LinkedHashMap<span style="color:#f92672">&lt;&gt;(</span>initialCapacity<span style="color:#f92672">,</span> loadFactor<span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>通过HashSet的构造函数我们就能略知一二，HashSet有个map的成员变量保存了一个HashMap的实例。</p>
+<p>HashSet的add方法：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">add</span><span style="color:#f92672">(</span>E e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">return</span> map<span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>e<span style="color:#f92672">,</span> PRESENT<span style="color:#f92672">)==</span><span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>HashSet的add方法很简单，就一行代码；成员变量PRESENT是new出来的一个static final的Object对象。</p>
+<p>HashSet通过将值作为HashMap的key，一个static final的Object对象作为value用来实现了一个不可重复的set容器</p>
+<h1 id="思考">思考</h1>
+<ul>
+<li>
+<p>Q：为什么HashMap与HashSet容量总是2的n次方？
+A：HashMap通过h &amp; (table.length -1)来得到该对象的保存位，当长度总是2的n次方时，h &amp; (length-1)运算等价于对length取模，也就是h%length，但是&amp;比%具有更高的效率。</p>
+</li>
+<li>
+<p>Q：为什么HashMap要对长度取模？
+A：把hash值对数组长度取模运算，可以使元素相对均匀分布在数组中。</p>
+</li>
+</ul>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Bhashmap%E4%B8%8Ehashset/" data-id="f4a8934de66f67bfadb00947f249c29f" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+    <a href="https://dijun.cf/java%E5%AE%B9%E5%99%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90%E4%B9%8Blinkedlist/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Older
+      </strong>
+      <div class="article-nav-title">Java容器源码分析之LinkedList</div>
+    </a>
+    
+
+    
+    <a href="https://dijun.cf/spring%E6%A8%A1%E5%9D%97%E8%A7%A3%E8%AF%BB/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Spring模块解读</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java容器源码分析之HashMap与HashSet" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Task源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-26 14:40:31 &#43;0000 UTC" itemprop="datePublished">2018-06-26</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java容器源码分析之HashMap与HashSet" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-mvc%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Mvc源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-25 15:03:57 &#43;0000 UTC" itemprop="datePublished">2018-06-25</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java容器源码分析之HashMap与HashSet" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-transaction%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Transaction源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-15 14:57:50 &#43;0000 UTC" itemprop="datePublished">2018-06-15</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="Java容器源码分析之HashMap与HashSet" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-context%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Context源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 23:19:43 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java容器源码分析之HashMap与HashSet" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/spring">
+                        spring
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/spring-aop%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" class="title">Spring Aop源码分析</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-06-06 12:08:31 &#43;0000 UTC" itemprop="datePublished">2018-06-06</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java">
+                    java
+                </a>
+                <span class="category-list-count">3</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">9</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8">
+                    容器
+                </a>
+                <span class="category-list-count">3</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+        
+        <a href="https://dijun.cf/tags/spring" style="font-size: 12px;">spring</a>
+        
+        
+        <a href="https://dijun.cf/tags/%E5%AE%B9%E5%99%A8" style="font-size: 12px;">容器</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>
