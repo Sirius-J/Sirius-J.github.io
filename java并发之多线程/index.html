@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Java并发之多线程 &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E5%A4%9A%E7%BA%BF%E7%A8%8B/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Java并发之多线程" />
+<meta property="og:description" content="写在前面
+多线程，是指从软件或者硬件上实现多个线程并发执行的技术。具有多线程能力的计算机因有硬件支持而能够在同一时间执行多于一个线程，进而提升整体处理性能。具有这种能力的系统包括对称多处理机、多核心处理器以及芯片级多处理或同时多线程处理器。在一个程序中，这些独立运行的程序片段叫作“线程”。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E5%A4%9A%E7%BA%BF%E7%A8%8B/" />
+<meta property="article:published_time" content="2018-07-01T10:31:49+00:00" />
+<meta property="article:modified_time" content="2018-07-01T10:31:49+00:00" />
+
+    
+    <meta itemprop="name" content="Java并发之多线程">
+<meta itemprop="description" content="写在前面
+多线程，是指从软件或者硬件上实现多个线程并发执行的技术。具有多线程能力的计算机因有硬件支持而能够在同一时间执行多于一个线程，进而提升整体处理性能。具有这种能力的系统包括对称多处理机、多核心处理器以及芯片级多处理或同时多线程处理器。在一个程序中，这些独立运行的程序片段叫作“线程”。">
+<meta itemprop="datePublished" content="2018-07-01T10:31:49+00:00" />
+<meta itemprop="dateModified" content="2018-07-01T10:31:49+00:00" />
+<meta itemprop="wordCount" content="236">
+
+
+
+<meta itemprop="keywords" content="Java,并发," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Java并发之多线程"/>
+<meta name="twitter:description" content="写在前面
+多线程，是指从软件或者硬件上实现多个线程并发执行的技术。具有多线程能力的计算机因有硬件支持而能够在同一时间执行多于一个线程，进而提升整体处理性能。具有这种能力的系统包括对称多处理机、多核心处理器以及芯片级多处理或同时多线程处理器。在一个程序中，这些独立运行的程序片段叫作“线程”。"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        22
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          5
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner3.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E5%A4%9A%E7%BA%BF%E7%A8%8B/">
+    <h1 class="article-title" itemprop="name">
+        Java并发之多线程
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-07-01 10:31:49 &#43;0000 UTC" itemprop="datePublished">2018-07-01</time>
+            &middot;
+            236
+            words
+            &middot;
+            2
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/java">Java</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/%E5%B9%B6%E5%8F%91">并发</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="写在前面">写在前面</h1>
+<p>多线程，是指从软件或者硬件上实现多个线程并发执行的技术。具有多线程能力的计算机因有硬件支持而能够在同一时间执行多于一个线程，进而提升整体处理性能。具有这种能力的系统包括对称多处理机、多核心处理器以及芯片级多处理或同时多线程处理器。在一个程序中，这些独立运行的程序片段叫作“线程”。</p>
+<p>现代编程语言都具有编写多线程程序的能力。就Java而言被大量应用于web后端处理，在处理大量并发访问网站时，多线程技术显得尤为重要。本系列文章将从Java代码及JDK源码介绍的方式全面讲述Java对多线程的支持。</p>
+<h1 id="java如何创建一个线程">Java如何创建一个线程</h1>
+<p>Java对于线程的实现具有多种方法。</p>
+<h2 id="继承thread类">继承Thread类</h2>
+<p>Thread类本质是一个实现了Runnable接口的类，通过继承Thread类，复写Thread类的run()方法，调用start()方法启动一个新的线程。
+Thread类的定义如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Thread</span> <span style="color:#66d9ef">implements</span> Runnable <span style="color:#f92672">{</span>
+    <span style="color:#f92672">......</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>继承Thread类实现一个新线程：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyThread</span> <span style="color:#66d9ef">extends</span> Thread<span style="color:#f92672">{</span>
+
+    <span style="color:#a6e22e">@Override</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Hello Thread.&#34;</span><span style="color:#f92672">);</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is new thread.&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        MyThread myThread <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MyThread<span style="color:#f92672">();</span>
+        myThread<span style="color:#f92672">.</span><span style="color:#a6e22e">start</span><span style="color:#f92672">();</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is main thread.&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+
+<span style="color:#f92672">}</span>
+</code></pre></div><p>我们看下Thread的start()方法源码：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">synchronized</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">start</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>threadStatus <span style="color:#f92672">!=</span> 0<span style="color:#f92672">)</span>      <span style="color:#75715e">//判断线程是否已经start()
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalThreadStateException<span style="color:#f92672">();</span>
+        group<span style="color:#f92672">.</span><span style="color:#a6e22e">add</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>            <span style="color:#75715e">//将这个线程添加至线程组
+</span><span style="color:#75715e"></span>
+        <span style="color:#66d9ef">boolean</span> started <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+            start0<span style="color:#f92672">();</span>               <span style="color:#75715e">//start()方法核心逻辑，调用native本地方法来启动线程
+</span><span style="color:#75715e"></span>            started <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>started<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                    group<span style="color:#f92672">.</span><span style="color:#a6e22e">threadStartFailed</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">);</span>
+                <span style="color:#f92672">}</span>
+            <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Throwable ignore<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+</code></pre></div><h2 id="实现runnable接口">实现Runnable接口</h2>
+<p>实现Runnable接口，新建一个线程：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyRunnable</span> <span style="color:#66d9ef">implements</span> Runnable <span style="color:#f92672">{</span>
+
+    <span style="color:#a6e22e">@Override</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Hello Thread.&#34;</span><span style="color:#f92672">);</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is new thread.&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        MyRunnable myRunnable <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MyRunnable<span style="color:#f92672">();</span>
+        Thread t <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Thread<span style="color:#f92672">(</span>myRunnable<span style="color:#f92672">);</span>
+        t<span style="color:#f92672">.</span><span style="color:#a6e22e">start</span><span style="color:#f92672">();</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is main thread.&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+
+<span style="color:#f92672">}</span>
+</code></pre></div><p>实现Runnable接口后需要复写Runnable的run方法，然后将子类作为参数传入Thread的构造方法中，然后调用Thread的start()方法来启动这个线程。
+我们可以通过JDK8提供的lambda表达式来简化这个代码。
+lambda表达式实现：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyRunnable</span> <span style="color:#f92672">{</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">new</span> Thread<span style="color:#f92672">(()</span> <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>
+            System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Hello Thread.&#34;</span><span style="color:#f92672">);</span>
+            System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is new thread.&#34;</span><span style="color:#f92672">);</span>
+        <span style="color:#f92672">}).</span><span style="color:#a6e22e">start</span><span style="color:#f92672">();</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is main thread.&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+
+<span style="color:#f92672">}</span>
+</code></pre></div><h2 id="实现callable接口">实现Callable接口</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyCallable</span> <span style="color:#66d9ef">implements</span> Callable<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> <span style="color:#f92672">{</span>
+
+    <span style="color:#a6e22e">@Override</span>
+    <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">call</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Hello Thread.&#34;</span><span style="color:#f92672">);</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is new thread.&#34;</span><span style="color:#f92672">);</span>
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        MyCallable myCallable <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> MyCallable<span style="color:#f92672">();</span>
+        FutureTask<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> futureTask <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> FutureTask<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;(</span>myCallable<span style="color:#f92672">);</span>
+        Thread t <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Thread<span style="color:#f92672">(</span>futureTask<span style="color:#f92672">);</span>
+        t<span style="color:#f92672">.</span><span style="color:#a6e22e">start</span><span style="color:#f92672">();</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is main thread.&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+
+<span style="color:#f92672">}</span>
+</code></pre></div><p>实现Callable接口的方式来实现多线程，首先需要复写Callable的call()方法，然后将子类作为参数传入FutureTask的构造函数，再将FutureTask的实例作为参数传入Thread的构造函数，最后调用Thread方法的start()方法启动新的线程。</p>
+<h1 id="实现多线程方式对比">实现多线程方式对比</h1>
+<p>细心的读者可能已经发现了，我们在通过实现Callable方法实现多线程的方式中，在复写call()方法时是可以抛出异常和有返回值的。</p>
+<p>通过继承Thread类和实现Runnable接口实现的多线程方式是不能有返回值和抛出异常的，如果你需要在新的线程中抛出异常并且带有返回值的话，你需要通过实现Callable接口的方式来实现多线程。</p>
+<h1 id="线程生命周期">线程生命周期</h1>
+<p>在调用start()方法后，线程并不是立马在执行，而是处于可运行状态，等待cpu分配资源才会运行，当线程没有了cpu资源时线程又会处于可运行状态。当处于运行状态的线程被sleep、wait、join等，线程的状态会变为阻塞状态，当阻塞的线程被唤醒时，线程又处于可运行状态等待cup分配资源进而运行，当线程运行完或者因为异常退出时，此时线程处于死亡状态。
+线程的生命周期可用图表示：
+<img src="/images/Java%E5%B9%B6%E5%8F%91%E4%B9%8B%E5%A4%9A%E7%BA%BF%E7%A8%8B/1.png" alt="线程生命周期"></p>
+<h1 id="守护线程">守护线程</h1>
+<h2 id="什么是守护线程">什么是守护线程</h2>
+<p>在线程启动前，调用Thread的setDaemon(true)方法可将线程设置为守护线程。</p>
+<p>thread.setDaemon(true)必须在thread.start()之前设置，否则会跑出一个IllegalThreadStateException异常。你不能把正在运行的常规线程设置为守护线程。</p>
+<p>在Daemon线程中产生的新线程也是Daemon的。</p>
+<p>只要当前JVM实例中尚存在任何一个非守护线程没有结束，守护线程就全部工作；只有当最后一个非守护线程结束时，守护线程随着JVM一同结束工作。Daemon的作用是为其他线程的运行提供便利服务。JVM在启动时，系统就自动生成了一些守护线程，如GC线程就是个守护线程。</p>
+<h2 id="守护线程的用途">守护线程的用途</h2>
+<p>在现在分布式系统架构中，很多组件需要和server维持一个心跳连接发送心跳包，这个时候用守护线程来实现这个心跳包的发送最好不过了。</p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E5%A4%9A%E7%BA%BF%E7%A8%8B/" data-id="8a1df32931a7b4a927af8e667b00512d" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+    <a href="https://dijun.cf/spring-task%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Older
+      </strong>
+      <div class="article-nav-title">Spring Task源码分析</div>
+    </a>
+    
+
+    
+    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Java并发之线程安全</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantreadwritelock/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java并发之多线程" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantreadwritelock/" class="title">Java并发之ReentrantReadWriteLock</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-08 10:55:42 &#43;0000 UTC" itemprop="datePublished">2018-07-08</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantlock/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java并发之多线程" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantlock/" class="title">Java并发之ReentrantLock</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-05 19:10:26 &#43;0000 UTC" itemprop="datePublished">2018-07-05</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Baqs/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner2.jpg)" alt="Java并发之多线程" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Baqs/" class="title">Java并发之AQS</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-02 13:14:53 &#43;0000 UTC" itemprop="datePublished">2018-07-02</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java并发之多线程" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/" class="title">Java并发之CAS</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-02 09:47:39 &#43;0000 UTC" itemprop="datePublished">2018-07-02</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java并发之多线程" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8/" class="title">Java并发之线程安全</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-01 13:14:53 &#43;0000 UTC" itemprop="datePublished">2018-07-01</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java">
+                    java
+                </a>
+                <span class="category-list-count">9</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">15</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/%E5%B9%B6%E5%8F%91">
+                    并发
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+        
+        <a href="https://dijun.cf/tags/spring" style="font-size: 12px;">spring</a>
+        
+        
+        <a href="https://dijun.cf/tags/%E5%B9%B6%E5%8F%91" style="font-size: 12px;">并发</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>

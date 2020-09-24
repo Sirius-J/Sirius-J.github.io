@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <title>Java并发之CAS &middot; 狄俊&#39;s blog</title>
+    <meta name="generator" content="Hugo 0.75.1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="author" content="狄俊">
+    
+      <meta name="description" content="">
+    
+    
+    <link rel="canonical" href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/"/>
+    <link rel="icon" href="https://dijun.cf/favicon.ico">
+    <link rel="apple-touch-icon" href="https://dijun.cf/apple-touch-icon.png"/>
+    <link rel="stylesheet" href="https://dijun.cf/css/style.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://dijun.cf/css/monokai.css">
+    <link rel="stylesheet" href="https://dijun.cf/fancybox/jquery.fancybox.css">
+    
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400italic,400,600' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet' type='text/css'>
+    <meta property="og:title" content="Java并发之CAS" />
+<meta property="og:description" content="CAS算法介绍
+CAS算法全称为Compare and swap，翻译成中文就是“比较与交换”，是一种有名的无锁算法。无锁编程，就是指在不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步。
+在CAS算法中需要理解3个操作数，内存值V，旧的预期值A，要修改的新值B。
+当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做，这就是CAS算法。现代的CPU提供了特殊的指令，可以自动更新共享数据，而且能够检测到其他线程的干扰。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/" />
+<meta property="article:published_time" content="2018-07-02T09:47:39+00:00" />
+<meta property="article:modified_time" content="2018-07-02T09:47:39+00:00" />
+
+    
+    <meta itemprop="name" content="Java并发之CAS">
+<meta itemprop="description" content="CAS算法介绍
+CAS算法全称为Compare and swap，翻译成中文就是“比较与交换”，是一种有名的无锁算法。无锁编程，就是指在不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步。
+在CAS算法中需要理解3个操作数，内存值V，旧的预期值A，要修改的新值B。
+当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做，这就是CAS算法。现代的CPU提供了特殊的指令，可以自动更新共享数据，而且能够检测到其他线程的干扰。">
+<meta itemprop="datePublished" content="2018-07-02T09:47:39+00:00" />
+<meta itemprop="dateModified" content="2018-07-02T09:47:39+00:00" />
+<meta itemprop="wordCount" content="278">
+
+
+
+<meta itemprop="keywords" content="Java,并发," />
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Java并发之CAS"/>
+<meta name="twitter:description" content="CAS算法介绍
+CAS算法全称为Compare and swap，翻译成中文就是“比较与交换”，是一种有名的无锁算法。无锁编程，就是指在不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步。
+在CAS算法中需要理解3个操作数，内存值V，旧的预期值A，要修改的新值B。
+当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做，这就是CAS算法。现代的CPU提供了特殊的指令，可以自动更新共享数据，而且能够检测到其他线程的干扰。"/>
+
+    
+
+    
+
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+
+
+<div id="container">
+	<header id="header">
+  <div id="header-main" class="header-inner">
+    <div class="outer">
+      <a href="https://dijun.cf" id="logo">
+          
+          <i class="logo" style="background-image: url('https://dijun.cf/images/logo.png')"></i>
+          
+          <span class="site-title">狄俊&#39;s blog</span>
+      </a>
+      <nav id="main-nav">
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/">Home</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a>
+          
+          
+          
+          <a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a>
+          
+          
+
+          
+
+          
+          
+          
+          
+          
+          
+          
+      </nav>
+        <nav id="sub-nav">
+          <div class="profile" id="profile-nav">
+            <a id="profile-anchor" href="javascript:;"><img class="avatar" src="https://dijun.cf/images/avatar.png"><i class="fa fa-caret-down"></i></a>
+          </div>
+        </nav>
+        <div id="search-form-wrap">
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+              <input type="search" name="q" class="search-form-input" placeholder="Search">
+              <button type="submit" class="search-form-submit">
+              </button>
+              <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+         </form>
+        </div>
+    </div>
+  </div>
+  <div id="main-nav-mobile" class="header-sub header-inner">
+    <table class="menu outer">
+      <tbody>
+          <tr>
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/">Home</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/categories/">Categories</a></td>
+          
+          
+          
+          <td><a class="main-nav-link" href="https://dijun.cf/tags/">Tags</a></td>
+          
+          
+
+          
+
+          
+          
+          
+          
+          
+          
+          
+          <td>
+          <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form">
+          <input type="search" name="q" class="search-form-input" placeholder="Search">
+          <input type="hidden" name="sitesearch" value="https://dijun.cf" />
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</header>
+
+   	
+   	<div class="outer">
+   	
+    	<aside id="profile">
+  <div class="inner profile-inner">
+    <div class="base-info profile-block">
+      <img id="avatar" src="https://dijun.cf/images/avatar.png">
+      <h2 id="name">狄俊</h2>
+      <h3 id="title">Java &amp; Big Data Engineer</h3>
+      <span id="location"><i class="fa fa-map-marker"></i>Shanghai</span>
+      
+          <a id="follow" href="https://dijun.cf">
+              Follow
+          </a>
+      
+    </div>
+    <div class="article-info profile-block">
+      <div class="article-info-block">
+        22
+        <span>Posts</span>
+      </div>
+      <div class="article-info-block">
+        
+          5
+        
+        <span>
+            Tags
+        </span>
+      </div>
+    </div>
+    <div class="profile-block social-links">
+      <table>
+        <tr>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <td><a href="https://dijun.cf/index.xml" target="_blank" title="RSS"><i class="fa fa-rss"></i></a></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</aside>
+
+    
+
+    <section id="main">
+    
+    <article id="page-undefined" class="article article-type-page" itemscope="" itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+            <img src="/banners/banner2.jpg" class="article-banner">
+        
+
+        <header class="article-header">
+    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/">
+    <h1 class="article-title" itemprop="name">
+        Java并发之CAS
+    </h1>
+    </a>
+    <div class="article-meta">
+
+        
+        <div class="article-date">
+            <i class="fa fa-calendar"></i>
+            <time datetime="2018-07-02 09:47:39 &#43;0000 UTC" itemprop="datePublished">2018-07-02</time>
+            &middot;
+            278
+            words
+            &middot;
+            2
+            minute read
+        </div>
+        
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-folder"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/categories/java">Java</a>
+                
+                
+            </div>
+            
+        
+
+        
+            
+            
+            <div class="article-category">
+                <i class="fa fa-tags"></i>
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/java">Java</a>
+                &middot;
+                
+                
+                <a class="article-category-link" href="https://dijun.cf/tags/%E5%B9%B6%E5%8F%91">并发</a>
+                
+                
+            </div>
+            
+        
+    </div>
+</header>
+
+        <div class="article-entry" itemprop="articleBody">
+            <h1 id="cas算法介绍">CAS算法介绍</h1>
+<p>CAS算法全称为Compare and swap，翻译成中文就是“比较与交换”，是一种有名的无锁算法。无锁编程，就是指在不使用锁的情况下实现多线程之间的变量同步，也就是在没有线程被阻塞的情况下实现变量的同步。</p>
+<p>在CAS算法中需要理解3个操作数，内存值V，旧的预期值A，要修改的新值B。</p>
+<p>当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做，这就是CAS算法。现代的CPU提供了特殊的指令，可以自动更新共享数据，而且能够检测到其他线程的干扰。</p>
+<h1 id="java中cas算法的实现">Java中CAS算法的实现</h1>
+<p>很多人认为Java没办法直接操作内存，其实不然，sun为Java添加了一个“后门”，可以允许Java简介的操作内存，而这个“后门”就是Unsafe类。</p>
+<p>Unsafe类是在sun.misc包下，不属于Java标准。但是很多Java的基础类库，包括一些被广泛使用的高性能开发库都是基于Unsafe类开发的，比如Netty、Cassandra、Hadoop、Kafka等。Unsafe类在提升Java运行效率，增强Java语言底层操作能力方面起了很大的作用。</p>
+<p>Unsafe类使Java拥有了像C语言的指针一样操作内存空间的能力，同时也带来了指针的问题。过度的使用Unsafe类会使得出错的几率变大，因此Java官方并不建议使用的，官方文档也几乎没有。Oracle正在计划从Java 9中去掉Unsafe类。</p>
+<p>而我们的CAS算法也是在Unsafe类中实现的。</p>
+<p>如：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">native</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">compareAndSwapInt</span><span style="color:#f92672">(</span>Object var1<span style="color:#f92672">,</span> <span style="color:#66d9ef">long</span> var2<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> var4<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> var5<span style="color:#f92672">);</span>
+</code></pre></div><p>Unsafe类中绝大部分的方法都是native方法，调用本地方法实现，CAS算法也是。</p>
+<h1 id="cas算法的aba问题">CAS算法的ABA问题</h1>
+<p>CAS算法有一个经典的ABA问题；</p>
+<p>ABA问题是指，线程1从内存V中取出值为A，然后期望改成某一值，同一时刻一个线程2从内存V中取出值也为A，然后期望改为B，此时由于某些原因，线程1被阻塞，线程2继续执行，将内存V的值改为了B，然后又一线程将内存V的值改为了A，此时线程1被唤醒，由于内存V的值为A所以导致线程1修改成功。其实此时线程1对比的内存V的值A并不是开始的那个A了，应该要修改失败才对。</p>
+<h2 id="aba问题在java中的解决">ABA问题在Java中的解决</h2>
+<p>要解决ABA问题其实很简单，可以为内存V的值添加一个版本号或者修改次数，当预期值A与内存V值相等时而版本号或修改次数与V的版本号或修改次数不等，则拒绝修改。</p>
+<p>Java中AtomicStampedReference类解决了ABA问题，我们来看下它是怎么实现的。</p>
+<p>AtomicStampedReference类中有一个内部类Pair，Pair类里reference属性保存了旧的期望值，stamp属性保存了版本号或者是修改次数。</p>
+<p>我们来看下AtomicStampedReference类的compareAndSet方法源码：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">compareAndSet</span><span style="color:#f92672">(</span>V   expectedReference<span style="color:#f92672">,</span>
+                                 V   newReference<span style="color:#f92672">,</span>
+                                 <span style="color:#66d9ef">int</span> expectedStamp<span style="color:#f92672">,</span>
+                                 <span style="color:#66d9ef">int</span> newStamp<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Pair<span style="color:#f92672">&lt;</span>V<span style="color:#f92672">&gt;</span> current <span style="color:#f92672">=</span> pair<span style="color:#f92672">;</span>
+    <span style="color:#75715e">//只有当版本号相同的情况下才有可能修改成功
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span>
+        expectedReference <span style="color:#f92672">==</span> current<span style="color:#f92672">.</span><span style="color:#a6e22e">reference</span> <span style="color:#f92672">&amp;&amp;</span>
+        expectedStamp <span style="color:#f92672">==</span> current<span style="color:#f92672">.</span><span style="color:#a6e22e">stamp</span> <span style="color:#f92672">&amp;&amp;</span>
+        <span style="color:#f92672">((</span>newReference <span style="color:#f92672">==</span> current<span style="color:#f92672">.</span><span style="color:#a6e22e">reference</span> <span style="color:#f92672">&amp;&amp;</span>
+          newStamp <span style="color:#f92672">==</span> current<span style="color:#f92672">.</span><span style="color:#a6e22e">stamp</span><span style="color:#f92672">)</span> <span style="color:#f92672">||</span>
+         casPair<span style="color:#f92672">(</span>current<span style="color:#f92672">,</span> Pair<span style="color:#f92672">.</span><span style="color:#a6e22e">of</span><span style="color:#f92672">(</span>newReference<span style="color:#f92672">,</span> newStamp<span style="color:#f92672">)));</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><h1 id="利用cas算法实现一个trylock">利用CAS算法实现一个tryLock</h1>
+<h2 id="获取unsafe类实例">获取Unsafe类实例</h2>
+<p>Unsafe类提供了一个静态方法来获取它：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> Unsafe <span style="color:#a6e22e">getUnsafe</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    Class var0 <span style="color:#f92672">=</span> Reflection<span style="color:#f92672">.</span><span style="color:#a6e22e">getCallerClass</span><span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>VM<span style="color:#f92672">.</span><span style="color:#a6e22e">isSystemDomainLoader</span><span style="color:#f92672">(</span>var0<span style="color:#f92672">.</span><span style="color:#a6e22e">getClassLoader</span><span style="color:#f92672">()))</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> SecurityException<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Unsafe&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">return</span> theUnsafe<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>虽然Unsafe类提供了静态方法去获取它，但是我们还是拿不到，我们从源码可以看到，在调用getUnsafe方法时，对该方法做了安全限制，会抛出异常；</p>
+<p>尽管如此，我们还是可以通过Java万能的反射来获取这个类的实例的，在Unsafe类中，Unsafe使用了theUnsafe属性来存储了自身的实例对象，我们可以通过反射，来获取Unsafe的theUnsafe属性的值，从而获取Unsafe实例。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java">Class<span style="color:#f92672">&lt;?&gt;</span> clazz <span style="color:#f92672">=</span> Unsafe<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">;</span>
+Field f <span style="color:#f92672">=</span> clazz<span style="color:#f92672">.</span><span style="color:#a6e22e">getDeclaredField</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;theUnsafe&#34;</span><span style="color:#f92672">);</span>
+f<span style="color:#f92672">.</span><span style="color:#a6e22e">setAccessible</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+UNSAFE <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Unsafe<span style="color:#f92672">)</span> f<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+</code></pre></div><h2 id="构造unsafe实现的trylock">构造Unsafe实现的tryLock</h2>
+<p>首先我们创建一个UnsafeLock的类，来完成使用Unsafe完成锁的功能；</p>
+<p>这个类里面我们需要一个status属性表示加锁状态，一个unsafe属性来存储Unsafe实例；</p>
+<p>Unsafe在修改一个内存值时需要传入这个内存值的偏移量，所以我们还需要一个属性来存储status的偏移量；</p>
+<p>然后再实现我们的lock方法和unLock方法。</p>
+<p>我们自己实现的锁源码如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">UnsafeLock</span> <span style="color:#f92672">{</span>
+
+    <span style="color:#66d9ef">private</span> Unsafe unsafe<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">int</span> status <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">long</span> statusOffset<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">private</span> Thread localThread<span style="color:#f92672">;</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#a6e22e">UnsafeLock</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> NoSuchFieldException<span style="color:#f92672">,</span> IllegalAccessException <span style="color:#f92672">{</span>
+        Class<span style="color:#f92672">&lt;?&gt;</span> clazz <span style="color:#f92672">=</span> Unsafe<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">;</span>
+        Field f <span style="color:#f92672">=</span> clazz<span style="color:#f92672">.</span><span style="color:#a6e22e">getDeclaredField</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;theUnsafe&#34;</span><span style="color:#f92672">);</span>
+        f<span style="color:#f92672">.</span><span style="color:#a6e22e">setAccessible</span><span style="color:#f92672">(</span><span style="color:#66d9ef">true</span><span style="color:#f92672">);</span>
+        unsafe <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Unsafe<span style="color:#f92672">)</span> f<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+        statusOffset <span style="color:#f92672">=</span> unsafe<span style="color:#f92672">.</span><span style="color:#a6e22e">objectFieldOffset</span><span style="color:#f92672">(</span>UnsafeLock<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">.</span><span style="color:#a6e22e">getDeclaredField</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;status&#34;</span><span style="color:#f92672">));</span>
+
+    <span style="color:#f92672">}</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">tryLock</span><span style="color:#f92672">()</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>unsafe<span style="color:#f92672">.</span><span style="color:#a6e22e">compareAndSwapInt</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> statusOffset<span style="color:#f92672">,</span> 0<span style="color:#f92672">,</span> 1<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            localThread <span style="color:#f92672">=</span> Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">();</span>
+            <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span> <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> Exception<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;获取锁失败&#34;</span><span style="color:#f92672">);</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">unlock</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">()</span> <span style="color:#f92672">!=</span> localThread<span style="color:#f92672">)</span>
+            <span style="color:#66d9ef">return</span><span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>unsafe<span style="color:#f92672">.</span><span style="color:#a6e22e">compareAndSwapInt</span><span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> statusOffset<span style="color:#f92672">,</span> 1<span style="color:#f92672">,</span> 0<span style="color:#f92672">))</span> <span style="color:#f92672">{</span>
+            localThread <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+
+<span style="color:#f92672">}</span>
+</code></pre></div><p>最后我们来写一个测试类来测试下这个tryLock：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-Java" data-lang="Java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">MyLockTest</span> <span style="color:#f92672">{</span>
+
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span> code <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> Exception <span style="color:#f92672">{</span>
+        UnsafeLock lock <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> UnsafeLock<span style="color:#f92672">();</span>
+        <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> i <span style="color:#f92672">&lt;</span> 10<span style="color:#f92672">;</span> i<span style="color:#f92672">++)</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">new</span> Thread<span style="color:#f92672">(()</span> <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+                    lock<span style="color:#f92672">.</span><span style="color:#a6e22e">tryLock</span><span style="color:#f92672">();</span>
+                    System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;线程&#34;</span><span style="color:#f92672">+</span>Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()+</span><span style="color:#e6db74">&#34;获取锁成功&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&#34;</span><span style="color:#f92672">);</span>
+                    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> j <span style="color:#f92672">&lt;</span> 10<span style="color:#f92672">;</span> j<span style="color:#f92672">++)</span>
+                        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span>Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;:&#34;</span> <span style="color:#f92672">+</span> code<span style="color:#f92672">++);</span>
+                <span style="color:#f92672">}</span> <span style="color:#66d9ef">catch</span> <span style="color:#f92672">(</span>Exception e<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                    System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;--------线程&#34;</span><span style="color:#f92672">+</span>Thread<span style="color:#f92672">.</span><span style="color:#a6e22e">currentThread</span><span style="color:#f92672">().</span><span style="color:#a6e22e">getName</span><span style="color:#f92672">()+</span><span style="color:#e6db74">&#34;获取锁失败--------&#34;</span><span style="color:#f92672">);</span>
+                <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+                    lock<span style="color:#f92672">.</span><span style="color:#a6e22e">unlock</span><span style="color:#f92672">();</span>
+                <span style="color:#f92672">}</span>
+            <span style="color:#f92672">},</span> <span style="color:#e6db74">&#34;t&#34;</span> <span style="color:#f92672">+</span> i<span style="color:#f92672">).</span><span style="color:#a6e22e">start</span><span style="color:#f92672">();</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>运行的结果如下图：</p>
+<p><img src="/images/Java%E5%B9%B6%E5%8F%91%E4%B9%8BCAS/1.png" alt="运行结果截图"></p>
+        </div>
+        <footer class="article-footer">
+    <a data-url="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/" data-id="02c9b60e7c5526de91685900f334b755" class="article-share-link">
+        <i class="fa fa-share"></i>
+        Share
+    </a>
+    
+
+    <script>
+    (function ($) {
+        
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+    </script>
+</footer>
+
+    </div>
+
+    
+<nav id="article-nav">
+    
+    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Older
+      </strong>
+      <div class="article-nav-title">Java并发之线程安全</div>
+    </a>
+    
+
+    
+    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Baqs/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">
+          Newer
+      </strong>
+      <div class="article-nav-title">Java并发之AQS</div>
+    </a>
+    
+</nav>
+
+
+</article>
+
+
+
+    </section>
+
+   	
+    	<aside id="sidebar">
+    
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Recents
+    </h3>
+    <div class="widget">
+      <ul id="recent-post">
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantreadwritelock/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner3.jpg)" alt="Java并发之CAS" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantreadwritelock/" class="title">Java并发之ReentrantReadWriteLock</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-08 10:55:42 &#43;0000 UTC" itemprop="datePublished">2018-07-08</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantlock/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java并发之CAS" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantlock/" class="title">Java并发之ReentrantLock</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-05 19:10:26 &#43;0000 UTC" itemprop="datePublished">2018-07-05</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Baqs/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java并发之CAS" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Baqs/" class="title">Java并发之AQS</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-02 13:14:53 &#43;0000 UTC" itemprop="datePublished">2018-07-02</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner4.jpg)" alt="Java并发之CAS" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Bcas/" class="title">Java并发之CAS</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-02 09:47:39 &#43;0000 UTC" itemprop="datePublished">2018-07-02</time>
+                    </p>
+                </div>
+            </li>
+            
+            <li>
+                <div class="item-thumbnail">
+                    <a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8/" class="thumbnail">
+                    
+                        
+                        <span style="background-image:url(/banners/banner1.jpg)" alt="Java并发之CAS" class="thumbnail-image"></span>
+                    
+                    </a>
+                </div>
+                <div class="item-inner">
+                    
+                    
+                    <p class="item-category">
+                        
+                        <a class="article-category-link" href="https://dijun.cf/categories/java">
+                        Java
+                        </a>
+                    </p>
+                    
+                    
+                    <p class="item-title"><a href="https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8/" class="title">Java并发之线程安全</a></p>
+                    <p class="item-date">
+                        <time datetime="2018-07-01 13:14:53 &#43;0000 UTC" itemprop="datePublished">2018-07-01</time>
+                    </p>
+                </div>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java">
+                    java
+                </a>
+                <span class="category-list-count">9</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/categories/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tags
+    </h3>
+    <div class="widget">
+        <ul class="category-list">
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java">
+                    java
+                </a>
+                <span class="category-list-count">15</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA">
+                    java虚拟机
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/jvm">
+                    jvm
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/spring">
+                    spring
+                </a>
+                <span class="category-list-count">7</span>
+            </li>
+            
+            <li class="category-list-item">
+                
+                <a class="category-list-link" href="https://dijun.cf/tags/%E5%B9%B6%E5%8F%91">
+                    并发
+                </a>
+                <span class="category-list-count">6</span>
+            </li>
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+    
+
+
+<div class="widget-wrap">
+    <h3 class="widget-title">
+        Tag cloud
+    </h3>
+    <div class="widget tagcloud">
+        
+        
+        <a href="https://dijun.cf/tags/java" style="font-size: 12px;">java</a>
+        
+        
+        <a href="https://dijun.cf/tags/java%E8%99%9A%E6%8B%9F%E6%9C%BA" style="font-size: 12px;">java虚拟机</a>
+        
+        
+        <a href="https://dijun.cf/tags/jvm" style="font-size: 12px;">jvm</a>
+        
+        
+        <a href="https://dijun.cf/tags/spring" style="font-size: 12px;">spring</a>
+        
+        
+        <a href="https://dijun.cf/tags/%E5%B9%B6%E5%8F%91" style="font-size: 12px;">并发</a>
+        
+    </div>
+</div>
+
+
+
+
+
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+    
+	</div>
+</div>
+
+<footer id="footer">
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020
+      <a href="https://dijun.cf">狄俊</a>. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+
+<script src="https://dijun.cf/fancybox/jquery.fancybox.pack.js"></script>
+<script src="https://dijun.cf/js/script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+
+
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+
+
+</body>
+</html>
