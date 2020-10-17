@@ -6,7 +6,17 @@
     <description>Recent content in Posts on 狄俊&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 08 Jul 2018 10:55:42 +0000</lastBuildDate><atom:link href="https://dijun.cf/post/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 09 Jul 2018 10:55:42 +0000</lastBuildDate><atom:link href="https://dijun.cf/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Java并发之线程池</title>
+      <link>https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E6%B1%A0/</link>
+      <pubDate>Mon, 09 Jul 2018 10:55:42 +0000</pubDate>
+      
+      <guid>https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8B%E7%BA%BF%E7%A8%8B%E6%B1%A0/</guid>
+      <description>&lt;h1 id=&#34;为什么需要线程池&#34;&gt;为什么需要线程池&lt;/h1&gt;
+&lt;p&gt;操作系统中线程的实现有三种，一种是用户级线程，一种是内核支持线程，还有一种是前两种的组合方式。用户级线程是在用户空间实现的，而内核级线程是在OS内核空间实现的。JVM对于线程并没有明确的定义是用户线程还是内核线程，但Java常用的JVM HotSpot，它都是使用1:1线程模型即内核线程，线程的调度完全交给了操作系统内核；所以在HotSpot上创建线程需要操作系统从用户态切换到内核态，这个开销是巨大的。而Java的线程在使用完后就会被回收，而需要时又会被创建，所以通过将空闲线程管理起来成为线程池，当需要线程运行任务的时候就从线程池中拿线程，避免了线程的创建过程，提升效率。&lt;/p&gt;</description>
+    </item>
+    
     <item>
       <title>Java并发之ReentrantReadWriteLock</title>
       <link>https://dijun.cf/java%E5%B9%B6%E5%8F%91%E4%B9%8Breentrantreadwritelock/</link>
